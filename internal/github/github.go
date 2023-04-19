@@ -23,7 +23,6 @@ type GitHubRepository struct {
 	repo          *git.Repository
 	ghClient      *github.Client
 	auth          *http.BasicAuth
-	cloneURL      string
 	defaultBranch string
 }
 
@@ -41,18 +40,22 @@ func NewGitHubRepository() (*GitHubRepository, error) {
 	if err != nil {
 		return nil, err
 	}
+	repo, err := git.PlainOpen(".")
+	if err != nil {
+		return nil, err
+	}
 	host, _ := auth.DefaultHost()
 	token, _ := auth.TokenForHost(host)
 	return &GitHubRepository{
 		owner:    currRepo.Owner(),
 		name:     currRepo.Name(),
+		repo:     repo,
 		ghClient: ghClient,
 		auth: &http.BasicAuth{
 			Username: "x-access-token",
 			Password: token,
 		},
 		defaultBranch: repoData.GetDefaultBranch(),
-		cloneURL:      repoData.GetCloneURL(),
 	}, nil
 }
 
@@ -65,27 +68,28 @@ func (g *GitHubRepository) SetAtlasToken(token string) error {
 	return nil
 }
 
-// CloneRepo clones the repository to a temporary directory.
-// returns a cleanup function to be called after the repo is no longer needed.
-func (g *GitHubRepository) CloneRepo() (func() error, error) {
-	repo, err := git.PlainClone(tempPath, false, &git.CloneOptions{
-		URL:      g.cloneURL,
-		Auth:     g.auth,
-		Progress: os.Stdout,
-	})
+// IsDirty check if current git status is dirty.
+func (g *GitHubRepository) IsDirty() (bool, error) {
+	w, err := g.repo.Worktree()
 	if err != nil {
-		return nil, err
+		return false, err
 	}
-	cleanup := func() error {
-		return os.RemoveAll(tempPath)
+	status, err := w.Status()
+	if err != nil {
+		return false, err
 	}
-	g.repo = repo
-	return cleanup, err
+	return !status.IsClean(), nil
 }
 
-// CheckoutNewBranch creates a new branch in the repository.
+// CheckoutNewBranch creates a new branch on top of the default branch.
 func (g *GitHubRepository) CheckoutNewBranch(branchName string) error {
 	w, err := g.repo.Worktree()
+	if err != nil {
+		return err
+	}
+	err = w.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(g.defaultBranch),
+	})
 	if err != nil {
 		return err
 	}
