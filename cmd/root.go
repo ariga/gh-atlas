@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"ariga.io/gh-atlas/cmd/github"
+	"fmt"
+
 	"github.com/alecthomas/kong"
 )
 
@@ -19,38 +20,9 @@ func (i *InitCiCmd) Help() string {
 	  atlas init-ci -t $ATLAS_CLOUD_TOKEN "dir/migrations"`
 }
 
-const (
-	branchName = "gh-atlas-ci-init"
-	commitMsg  = "Add atlas.yml"
-	prTitle    = "Add atlas.yml to github actions"
-)
-
 func (i *InitCiCmd) Run() error {
-	repo, err := github.NewGitHubRepository()
-	if err != nil {
-		return err
-	}
-	if err = repo.SetAtlasToken(i.Token); err != nil {
-		return err
-	}
-	cleanup, err := repo.CloneRepo()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-	if err = repo.CheckoutNewBranch(branchName); err != nil {
-		return err
-	}
-	if err = repo.AddAtlasYaml(i.DirPath); err != nil {
-		return err
-	}
-	if err = repo.CommitChanges(commitMsg); err != nil {
-		return err
-	}
-	if err = repo.PushChanges(branchName); err != nil {
-		return err
-	}
-	return repo.CreatePR(prTitle, branchName)
+	fmt.Println("running command")
+	return nil
 }
 
 func Execute() {
