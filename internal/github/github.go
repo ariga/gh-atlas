@@ -15,8 +15,6 @@ import (
 	"github.com/google/go-github/v49/github"
 )
 
-const tempPath = "gh-atlas-temp"
-
 type GitHubRepository struct {
 	owner         string
 	name          string

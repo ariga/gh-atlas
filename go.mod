@@ -3,6 +3,7 @@ module ariga.io/gh-atlas
 go 1.20
 
 require (
+	github.com/alecthomas/kong v0.7.1
 	github.com/cli/go-gh v1.2.1
 	github.com/go-git/go-git/v5 v5.6.1
 	github.com/google/go-github/v49 v49.1.0
