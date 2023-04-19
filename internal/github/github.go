@@ -2,26 +2,20 @@ package github
 
 import (
 	"context"
-	"os"
-	"time"
 
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/auth"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-github/v49/github"
 )
 
 type GitHubRepository struct {
+	ctx           context.Context
 	owner         string
 	name          string
-	repo          *git.Repository
-	ghClient      *github.Client
-	auth          *http.BasicAuth
 	defaultBranch string
+	client        *github.Client
+	auth          *http.BasicAuth
 }
 
 func NewGitHubRepository() (*GitHubRepository, error) {
@@ -34,26 +28,23 @@ func NewGitHubRepository() (*GitHubRepository, error) {
 		return nil, err
 	}
 	ghClient := github.NewClient(httpClient)
-	repoData, _, err := ghClient.Repositories.Get(context.Background(), currRepo.Owner(), currRepo.Name())
-	if err != nil {
-		return nil, err
-	}
-	repo, err := git.PlainOpen(".")
+	ctx := context.Background()
+	repoData, _, err := ghClient.Repositories.Get(ctx, currRepo.Owner(), currRepo.Name())
 	if err != nil {
 		return nil, err
 	}
 	host, _ := auth.DefaultHost()
 	token, _ := auth.TokenForHost(host)
 	return &GitHubRepository{
-		owner:    currRepo.Owner(),
-		name:     currRepo.Name(),
-		repo:     repo,
-		ghClient: ghClient,
+		ctx:           ctx,
+		owner:         currRepo.Owner(),
+		name:          currRepo.Name(),
+		defaultBranch: repoData.GetDefaultBranch(),
+		client:        ghClient,
 		auth: &http.BasicAuth{
 			Username: "x-access-token",
 			Password: token,
 		},
-		defaultBranch: repoData.GetDefaultBranch(),
 	}, nil
 }
 
@@ -66,86 +57,50 @@ func (g *GitHubRepository) SetAtlasToken(token string) error {
 	return nil
 }
 
-// IsDirty check if current git status is dirty.
-func (g *GitHubRepository) IsDirty() (bool, error) {
-	w, err := g.repo.Worktree()
-	if err != nil {
-		return false, err
-	}
-	status, err := w.Status()
-	if err != nil {
-		return false, err
-	}
-	return !status.IsClean(), nil
-}
-
 // CheckoutNewBranch creates a new branch on top of the default branch.
-func (g *GitHubRepository) CheckoutNewBranch(branchName string) error {
-	w, err := g.repo.Worktree()
+func (g *GitHubRepository) CheckoutNewBranch(branchName string) (*github.Reference, error) {
+	defaultBranch, _, err := g.client.Git.GetRef(g.ctx, g.owner, g.name, "refs/heads/"+g.defaultBranch)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	err = w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(g.defaultBranch),
-	})
+	newBranch := &github.Reference{
+		Ref: github.String("refs/heads/" + branchName),
+		Object: &github.GitObject{
+			SHA: defaultBranch.Object.SHA,
+		},
+	}
+	ref, _, err := g.client.Git.CreateRef(g.ctx, g.owner, g.name, newBranch)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	branchRef := plumbing.NewBranchReferenceName(branchName)
-	err = w.Checkout(&git.CheckoutOptions{
-		Create: true,
-		Branch: branchRef,
-	})
-	return err
+	return ref, nil
 }
 
 // AddAtlasYaml atlas.yaml file to staging area.
-func (g *GitHubRepository) AddAtlasYaml(dirPath string) error {
-	w, err := g.repo.Worktree()
-	if err != nil {
-		return err
+func (g *GitHubRepository) AddAtlasYaml(dirPath, branchName string) error {
+	newFile := &github.RepositoryContentFileOptions{
+		Message: github.String("hello.txt"),
+		Content: []byte("Hello World"),
+		Branch:  github.String(branchName),
 	}
-	// TODO - implement logic to create the atlas.yaml file
-	_, err = w.Filesystem.Create("temp-file.txt")
-	if err != nil {
-		return err
-	}
-	// TODO add the file to .github/workflows/atlas.yaml
-	_, err = w.Add(".")
+	_, _, err := g.client.Repositories.CreateFile(g.ctx, g.owner, g.name, "./hello.txt", newFile)
 	return err
 }
 
-// CommitChanges commits the changes to the repository.
-func (g *GitHubRepository) CommitChanges(commitMsg string) error {
-	w, err := g.repo.Worktree()
+// CommitChanges commits changes to the branch.
+func (g *GitHubRepository) CommitChanges(branch *github.Reference, commitMsg string) error {
+	latestCommit, _, err := g.client.Git.GetCommit(g.ctx, g.owner, g.name, branch.GetObject().GetSHA())
 	if err != nil {
 		return err
 	}
-	user, _, err := g.ghClient.Users.Get(context.Background(), "")
-	if err != nil {
-		return err
+	commit := &github.Commit{
+		Message: github.String(commitMsg),
+		Tree:    &github.Tree{SHA: latestCommit.GetTree().SHA},
+		Parents: []*github.Commit{{
+			SHA: branch.GetObject().SHA,
+		}},
 	}
-	_, err = w.Commit(commitMsg, &git.CommitOptions{
-		Author: &object.Signature{
-			Name:  user.GetName(),
-			Email: user.GetEmail(),
-			When:  time.Now(),
-		},
-	})
-	return err
-}
-
-// PushChanges pushes the changes to the remote repository.
-func (g *GitHubRepository) PushChanges(branchName string) error {
-	branchRef := plumbing.NewBranchReferenceName(branchName)
-	err := g.repo.Push(&git.PushOptions{
-		RemoteName: "origin",
-		RefSpecs: []config.RefSpec{
-			config.RefSpec(branchRef + ":" + branchRef),
-		},
-		Auth:     g.auth,
-		Progress: os.Stdout,
-	})
+	_, _, err = g.client.Git.CreateCommit(g.ctx, g.owner, g.name, commit)
 	return err
 }
 
@@ -156,6 +111,6 @@ func (g *GitHubRepository) CreatePR(title string, branchName string) error {
 		Head:  &branchName,
 		Base:  &g.defaultBranch,
 	}
-	_, _, err := g.ghClient.PullRequests.Create(context.Background(), g.owner, g.name, pr)
+	_, _, err := g.client.PullRequests.Create(g.ctx, g.owner, g.name, pr)
 	return err
 }

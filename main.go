@@ -1,8 +1,6 @@
 package main
 
 import (
-	"errors"
-
 	"ariga.io/gh-atlas/internal/github"
 	"github.com/alecthomas/kong"
 )
@@ -41,26 +39,17 @@ func (i *InitCiCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	isDirty, err := repo.IsDirty()
-	if err != nil {
-		return err
-	}
-	if isDirty {
-		return errors.New("working tree is dirty, please commit or stash your changes")
-	}
 	if err = repo.SetAtlasToken(i.Token); err != nil {
 		return err
 	}
-	if err = repo.CheckoutNewBranch(branchName); err != nil {
+	branch, err := repo.CheckoutNewBranch(branchName)
+	if err != nil {
 		return err
 	}
-	if err = repo.AddAtlasYaml(i.DirPath); err != nil {
+	if err = repo.AddAtlasYaml(i.DirPath, branchName); err != nil {
 		return err
 	}
-	if err = repo.CommitChanges(commitMsg); err != nil {
-		return err
-	}
-	if err = repo.PushChanges(branchName); err != nil {
+	if err = repo.CommitChanges(branch, commitMsg); err != nil {
 		return err
 	}
 	return repo.CreatePR(prTitle, branchName)
