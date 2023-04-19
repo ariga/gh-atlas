@@ -16,7 +16,7 @@ type InitCiCmd struct {
 
 func (i *InitCiCmd) Help() string {
 	return `Example:
-	  atlas init-ci -t $ATLAS_CLOUD_TOKEN -path "dir/migrations"`
+	  atlas init-ci -t $ATLAS_CLOUD_TOKEN "dir/migrations"`
 }
 
 const (
