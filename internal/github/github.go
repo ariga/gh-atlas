@@ -23,7 +23,6 @@ type GitHubRepository struct {
 	repo          *git.Repository
 	ghClient      *github.Client
 	auth          *http.BasicAuth
-	cloneURL      string
 	defaultBranch string
 }
 
@@ -41,18 +40,22 @@ func NewGitHubRepository() (*GitHubRepository, error) {
 	if err != nil {
 		return nil, err
 	}
+	repo, err := git.PlainOpen(".")
+	if err != nil {
+		return nil, err
+	}
 	host, _ := auth.DefaultHost()
 	token, _ := auth.TokenForHost(host)
 	return &GitHubRepository{
 		owner:    currRepo.Owner(),
 		name:     currRepo.Name(),
+		repo:     repo,
 		ghClient: ghClient,
 		auth: &http.BasicAuth{
 			Username: "x-access-token",
 			Password: token,
 		},
 		defaultBranch: repoData.GetDefaultBranch(),
-		cloneURL:      repoData.GetCloneURL(),
 	}, nil
 }
 
@@ -63,24 +66,6 @@ func (g *GitHubRepository) SetAtlasToken(token string) error {
 	}
 	// TODO Implement logic to set the token in the repo secrets
 	return nil
-}
-
-// CloneRepo clones the repository to a temporary directory.
-// returns a cleanup function to be called after the repo is no longer needed.
-func (g *GitHubRepository) CloneRepo() (func() error, error) {
-	repo, err := git.PlainClone(tempPath, false, &git.CloneOptions{
-		URL:      g.cloneURL,
-		Auth:     g.auth,
-		Progress: os.Stdout,
-	})
-	if err != nil {
-		return nil, err
-	}
-	cleanup := func() error {
-		return os.RemoveAll(tempPath)
-	}
-	g.repo = repo
-	return cleanup, err
 }
 
 // CheckoutNewBranch creates a new branch in the repository.
