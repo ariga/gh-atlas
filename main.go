@@ -3,24 +3,32 @@ package main
 import (
 	"fmt"
 
-	"github.com/cli/go-gh"
+	"github.com/alecthomas/kong"
 )
 
 func main() {
-	fmt.Println("hi world, this is the gh-atlas extension!")
-	client, err := gh.RESTClient(nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	response := struct {Login string}{}
-	err = client.Get("user", &response)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Printf("running as %s\n", response.Login)
+	ctx := kong.Parse(&cli)
+	err := ctx.Run(&cli)
+	ctx.FatalIfErrorf(err)
 }
 
-// For more examples of using go-gh, see:
-// https://github.com/cli/go-gh/blob/trunk/example_gh_test.go
+// cli is the root command.
+var cli struct {
+	InitCI InitCiCmd `cmd:"" help:"Initialize a new Atlas CI configuration."`
+}
+
+// InitCiCmd is the command for initializing a new Atlas CI workflow.
+type InitCiCmd struct {
+	DirPath string `arg:"" type:"-path" help:"Path inside repository containing the migration files."`
+	Token   string `short:"t" help:"Atlas authentication token."`
+}
+
+func (i *InitCiCmd) Help() string {
+	return `Example:
+	  atlas init-ci -t $ATLAS_CLOUD_TOKEN "dir/migrations"`
+}
+
+func (i *InitCiCmd) Run() error {
+	fmt.Println("running command")
+	return nil
+}
