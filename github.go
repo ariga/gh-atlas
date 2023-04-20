@@ -41,8 +41,8 @@ func NewRepository() (*Repository, error) {
 }
 
 // CheckoutNewBranch creates a new branch on top of the default branch.
-func (g *Repository) CheckoutNewBranch(branchName string) error {
-	defaultBranch, _, err := g.client.Git.GetRef(g.ctx, g.owner, g.name, "refs/heads/"+g.defaultBranch)
+func (r *Repository) CheckoutNewBranch(branchName string) error {
+	defaultBranch, _, err := r.client.Git.GetRef(r.ctx, r.owner, r.name, "refs/heads/"+r.defaultBranch)
 	if err != nil {
 		return err
 	}
@@ -52,31 +52,30 @@ func (g *Repository) CheckoutNewBranch(branchName string) error {
 			SHA: defaultBranch.Object.SHA,
 		},
 	}
-	_, _, err = g.client.Git.CreateRef(g.ctx, g.owner, g.name, newBranch)
+	_, _, err = r.client.Git.CreateRef(r.ctx, r.owner, r.name, newBranch)
 	return err
 }
 
 // AddAtlasYaml create commit with atlas ci yaml file on the branch.
-func (g *Repository) AddAtlasYaml(dirPath, branchName, commitMsg string) error {
+func (r *Repository) AddAtlasYaml(dirPath, branchName, commitMsg string) error {
 	// TODO implement yaml file creation
 	newFile := &github.RepositoryContentFileOptions{
 		Message: github.String(commitMsg),
 		Content: []byte(""),
 		Branch:  github.String(branchName),
 	}
-	resp, _, err := g.client.Repositories.CreateFile(g.ctx, g.owner, g.name, "./hello.txt", newFile)
-	resp.Commit.Message = github.String("hello.txt")
+	_, _, err := r.client.Repositories.CreateFile(r.ctx, r.owner, r.name, "./hello.txt", newFile)
 	return err
 }
 
 // CreatePR creates a pull request for the branch.
-func (g *Repository) CreatePR(title string, branchName string) error {
+func (r *Repository) CreatePR(title string, branchName string) error {
 	newPR := &github.NewPullRequest{
 		Title: &title,
 		Head:  &branchName,
-		Base:  &g.defaultBranch,
+		Base:  &r.defaultBranch,
 	}
-	pr, _, err := g.client.PullRequests.Create(g.ctx, g.owner, g.name, newPR)
+	pr, _, err := r.client.PullRequests.Create(r.ctx, r.owner, r.name, newPR)
 	if err != nil {
 		return err
 	}
