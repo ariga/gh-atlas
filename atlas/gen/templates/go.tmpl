@@ -1,0 +1,37 @@
+package events
+{{ range .Events }}
+// {{ pascal .Name }} is the "{{ .Name }}" event.
+{{- if .Description }}
+// {{ .Description | period }}
+{{- end }}
+type {{ pascal .Name }} struct {
+    {{- range .Fields }}
+    {{ pascal .Name }} {{ gotype . }} `json:"{{ snake .Name }}"`
+    {{- end }}
+}
+
+// Name returns the event name.
+func (e {{ pascal .Name }}) Name() string {
+    return "{{ .Name }}"
+}
+
+// Props returns the event properties.
+func (e {{ pascal .Name }}) Props() map[string]any {
+    return map[string]any{
+        {{- range .Fields }}
+        "{{ .Name }}": e.{{ pascal .Name }},
+        {{- end }}
+    }
+}
+{{- end }}
+
+{{- range .Enums }}
+{{ $enum := . }}
+type {{ pascal $enum.Name }} string
+
+const (
+    {{- range $enum.Values }}
+    {{ pascal $enum.Name }}_{{ lower . | pascal }} {{ pascal $enum.Name }} = "{{ . }}"
+    {{- end }}
+)
+{{- end }}
