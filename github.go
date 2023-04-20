@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/cli/go-gh"
-	"github.com/cli/go-gh/pkg/auth"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-github/v49/github"
 )
 
@@ -16,7 +14,6 @@ type Repository struct {
 	name          string
 	defaultBranch string
 	client        *github.Client
-	auth          *http.BasicAuth
 }
 
 func NewRepository() (*Repository, error) {
@@ -34,26 +31,20 @@ func NewRepository() (*Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	host, _ := auth.DefaultHost()
-	token, _ := auth.TokenForHost(host)
 	return &Repository{
 		ctx:           ctx,
 		owner:         currRepo.Owner(),
 		name:          currRepo.Name(),
 		defaultBranch: repoData.GetDefaultBranch(),
 		client:        ghClient,
-		auth: &http.BasicAuth{
-			Username: "x-access-token",
-			Password: token,
-		},
 	}, nil
 }
 
 // CheckoutNewBranch creates a new branch on top of the default branch.
-func (g *Repository) CheckoutNewBranch(branchName string) (*github.Reference, error) {
+func (g *Repository) CheckoutNewBranch(branchName string) error {
 	defaultBranch, _, err := g.client.Git.GetRef(g.ctx, g.owner, g.name, "refs/heads/"+g.defaultBranch)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	newBranch := &github.Reference{
 		Ref: github.String("refs/heads/" + branchName),
@@ -61,39 +52,20 @@ func (g *Repository) CheckoutNewBranch(branchName string) (*github.Reference, er
 			SHA: defaultBranch.Object.SHA,
 		},
 	}
-	ref, _, err := g.client.Git.CreateRef(g.ctx, g.owner, g.name, newBranch)
-	if err != nil {
-		return nil, err
-	}
-	return ref, nil
-}
-
-// AddAtlasYaml atlas.yaml file to staging area.
-func (g *Repository) AddAtlasYaml(dirPath, branchName string) error {
-	// TODO implement this function
-	newFile := &github.RepositoryContentFileOptions{
-		Message: github.String("hello.txt"),
-		Content: []byte(""),
-		Branch:  github.String(branchName),
-	}
-	_, _, err := g.client.Repositories.CreateFile(g.ctx, g.owner, g.name, "./hello.txt", newFile)
+	_, _, err = g.client.Git.CreateRef(g.ctx, g.owner, g.name, newBranch)
 	return err
 }
 
-// CommitChanges commits changes to the branch.
-func (g *Repository) CommitChanges(branch *github.Reference, commitMsg string) error {
-	latestCommit, _, err := g.client.Git.GetCommit(g.ctx, g.owner, g.name, branch.GetObject().GetSHA())
-	if err != nil {
-		return err
-	}
-	commit := &github.Commit{
+// AddAtlasYaml create commit with atlas ci yaml file on the branch.
+func (g *Repository) AddAtlasYaml(dirPath, branchName, commitMsg string) error {
+	// TODO implement yaml file creation
+	newFile := &github.RepositoryContentFileOptions{
 		Message: github.String(commitMsg),
-		Tree:    &github.Tree{SHA: latestCommit.GetTree().SHA},
-		Parents: []*github.Commit{{
-			SHA: branch.GetObject().SHA,
-		}},
+		Content: []byte(""),
+		Branch:  github.String(branchName),
 	}
-	_, _, err = g.client.Git.CreateCommit(g.ctx, g.owner, g.name, commit)
+	resp, _, err := g.client.Repositories.CreateFile(g.ctx, g.owner, g.name, "./hello.txt", newFile)
+	resp.Commit.Message = github.String("hello.txt")
 	return err
 }
 

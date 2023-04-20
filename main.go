@@ -38,14 +38,10 @@ func (i *InitCiCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	branch, err := repo.CheckoutNewBranch(branchName)
-	if err != nil {
+	if err = repo.CheckoutNewBranch(branchName); err != nil {
 		return err
 	}
-	if err = repo.AddAtlasYaml(i.DirPath, branchName); err != nil {
-		return err
-	}
-	if err = repo.CommitChanges(branch, commitMsg); err != nil {
+	if err = repo.AddAtlasYaml(i.DirPath, branchName, commitMsg); err != nil {
 		return err
 	}
 	return repo.CreatePR(prTitle, branchName)
