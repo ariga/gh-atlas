@@ -1,7 +1,6 @@
 package main
 
 import (
-	"ariga.io/gh-atlas/internal/github"
 	"github.com/alecthomas/kong"
 )
 
@@ -35,11 +34,8 @@ const (
 
 // Run the init-ci command.
 func (i *InitCiCmd) Run() error {
-	repo, err := github.NewGitHubRepository()
+	repo, err := NewRepository()
 	if err != nil {
-		return err
-	}
-	if err = repo.SetAtlasToken(i.Token); err != nil {
 		return err
 	}
 	branch, err := repo.CheckoutNewBranch(branchName)
