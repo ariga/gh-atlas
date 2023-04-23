@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"ariga.io/gh-atlas/gen"
 	"github.com/cli/go-gh"
 	"github.com/google/go-github/v49/github"
 )
@@ -56,14 +57,21 @@ func (r *Repository) CheckoutNewBranch(branchName string) error {
 }
 
 // AddAtlasYaml create commit with atlas ci yaml file on the branch.
-func (r *Repository) AddAtlasYaml(_, branchName, commitMsg string) error {
-	// TODO implement yaml file creation
+func (r *Repository) AddAtlasYaml(dirPath string, dialect gen.Dialect, branchName, commitMsg string) error {
+	content, err := gen.Generate(&gen.Def{
+		Path:          dirPath,
+		DefaultBranch: r.defaultBranch,
+		Dialect:       dialect,
+	})
+	if err != nil {
+		return err
+	}
 	newFile := &github.RepositoryContentFileOptions{
 		Message: github.String(commitMsg),
-		Content: []byte(""),
+		Content: content,
 		Branch:  github.String(branchName),
 	}
-	_, _, err := r.client.Repositories.CreateFile(r.ctx, r.owner, r.name, "./hello.txt", newFile)
+	_, _, err = r.client.Repositories.CreateFile(r.ctx, r.owner, r.name, ".github/workflows/ci-atlas.yaml", newFile)
 	return err
 }
 

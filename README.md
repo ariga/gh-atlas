@@ -8,6 +8,11 @@ Install this extension:
    ```sh
    gh extension install ariga/gh-atlas
    ```
+
+add permissions to add workflow files
+   ```bash
+    gh auth refresh -s write:packages,workflow
+   ```
    
 ## Development
 clone the repo:

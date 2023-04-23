@@ -3,12 +3,14 @@ package gen
 import (
 	"bytes"
 	"embed"
+	"errors"
 	"text/template"
 )
 
 type (
 	Dialect string
-	Def     struct {
+	// Def is the definition passed to template parser
+	Def struct {
 		Path          string
 		DefaultBranch string
 		Dialect       Dialect
@@ -21,6 +23,22 @@ const (
 	Mariadb  Dialect = "maria"
 	Sqlite   Dialect = "sqlite"
 )
+
+// GetDialect returns the dialect from string.
+func GetDialect(s string) (Dialect, error) {
+	switch s {
+	case "postgres":
+		return Postgres, nil
+	case "mysql":
+		return Mysql, nil
+	case "mariadb":
+		return Mariadb, nil
+	case "sqlite":
+		return Sqlite, nil
+	default:
+		return "", errors.New("unknown database dialect")
+	}
+}
 
 var (
 	//go:embed templates/*
@@ -37,7 +55,7 @@ func init() {
 	tmpl = t
 }
 
-// Generate the atlas ci yaml file content.
+// Generate the content of the atlas ci lint yaml.
 func Generate(d *Def) ([]byte, error) {
 	b := bytes.NewBuffer(nil)
 	if err := tmpl.ExecuteTemplate(b, "atlas.tmpl", d); err != nil {
