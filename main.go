@@ -22,13 +22,13 @@ var cli struct {
 // InitCiCmd is the command for initializing a new Atlas CI workflow.
 type InitCiCmd struct {
 	DirPath string `arg:"" type:"-path" help:"Path inside repository containing the migration files."`
-	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Dialect of the migration directory."`
+	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory."`
 	Token   string `short:"t" help:"Atlas authentication token."`
 }
 
 func (i *InitCiCmd) Help() string {
 	return `Example:
-	  gh atlas init-ci --dialect="mysql" --token=$ATLAS_CLOUD_TOKEN "dir/migrations"`
+	  gh atlas init-ci --Driver="mysql" --token=$ATLAS_CLOUD_TOKEN "dir/migrations"`
 }
 
 const (
@@ -46,11 +46,11 @@ func (i *InitCiCmd) Run() error {
 	if err = repo.CheckoutNewBranch(branchName); err != nil {
 		return err
 	}
-	dialect, err := gen.GetDialect(i.Driver)
+	Driver, err := gen.GetDriver(i.Driver)
 	if err != nil {
 		return err
 	}
-	if err = repo.AddAtlasYaml(i.DirPath, dialect, branchName, commitMsg); err != nil {
+	if err = repo.AddAtlasYaml(i.DirPath, Driver, branchName, commitMsg); err != nil {
 		return err
 	}
 	link, err := repo.CreatePR(prTitle, branchName)

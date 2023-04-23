@@ -8,24 +8,24 @@ import (
 )
 
 type (
-	Dialect string
+	Driver string
 	// Config passed to template parser
 	Config struct {
 		Path          string
 		DefaultBranch string
-		Dialect       Dialect
+		Driver        Driver
 	}
 )
 
 const (
-	Postgres Dialect = "postgres"
-	MySQL    Dialect = "mysql"
-	MariaDB  Dialect = "maria"
-	SQLite   Dialect = "sqlite"
+	Postgres Driver = "postgres"
+	MySQL    Driver = "mysql"
+	MariaDB  Driver = "maria"
+	SQLite   Driver = "sqlite"
 )
 
-// GetDialect returns the dialect from string.
-func GetDialect(s string) (Dialect, error) {
+// GetDriver returns the Driver from string.
+func GetDriver(s string) (Driver, error) {
 	switch s {
 	case "postgres":
 		return Postgres, nil
@@ -36,7 +36,7 @@ func GetDialect(s string) (Dialect, error) {
 	case "sqlite":
 		return SQLite, nil
 	default:
-		return "", errors.New("unknown database dialect")
+		return "", errors.New("unknown database Driver")
 	}
 }
 
