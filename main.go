@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"math/rand"
 
 	"github.com/alecthomas/kong"
+	"github.com/pkg/browser"
 )
 
 func main() {
@@ -28,7 +29,37 @@ func (i *InitCiCmd) Help() string {
 	  atlas init-ci -t $ATLAS_CLOUD_TOKEN "dir/migrations"`
 }
 
+const (
+	commitMsg = "Add Atlas CI configuration yaml to GitHub Workflows"
+	prTitle   = "Add Atlas CI configuration"
+)
+
+// Run the init-ci command.
 func (i *InitCiCmd) Run() error {
-	fmt.Println("running command")
-	return nil
+	repo, err := NewRepository()
+	if err != nil {
+		return err
+	}
+	branchName := "atlas-ci-" + randSeq(6)
+	if err = repo.CheckoutNewBranch(branchName); err != nil {
+		return err
+	}
+	if err = repo.AddAtlasYaml(i.DirPath, branchName, commitMsg); err != nil {
+		return err
+	}
+	link, err := repo.CreatePR(prTitle, branchName)
+	if err != nil {
+		return err
+	}
+	return browser.OpenURL(link)
+}
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randSeq(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
