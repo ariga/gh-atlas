@@ -1,6 +1,8 @@
 package main
 
 import (
+	"math/rand"
+
 	"github.com/alecthomas/kong"
 )
 
@@ -27,9 +29,8 @@ func (i *InitCiCmd) Help() string {
 }
 
 const (
-	branchName = "atlas-ci"
-	commitMsg  = "Add Atlas CI configuration yaml to GitHub Workflows"
-	prTitle    = "Add Atlas CI configuration"
+	commitMsg = "Add Atlas CI configuration yaml to GitHub Workflows"
+	prTitle   = "Add Atlas CI configuration"
 )
 
 // Run the init-ci command.
@@ -38,6 +39,7 @@ func (i *InitCiCmd) Run() error {
 	if err != nil {
 		return err
 	}
+	branchName := "atlas-ci-" + randSeq(6)
 	if err = repo.CheckoutNewBranch(branchName); err != nil {
 		return err
 	}
@@ -45,4 +47,14 @@ func (i *InitCiCmd) Run() error {
 		return err
 	}
 	return repo.CreatePR(prTitle, branchName)
+}
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randSeq(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
