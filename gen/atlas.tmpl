@@ -12,7 +12,7 @@ permissions:
   pull-requests: write
 jobs:
   lint:
-    {{- if .Driver | eq "mysql" }}
+    {{- if eq .Driver "mysql" }}
     services:
       # Spin up a mysql:8 container to be used as the dev-database for analysis.
       mysql:
@@ -28,8 +28,7 @@ jobs:
           --health-start-period 10s
           --health-timeout 5s
           --health-retries 10
-    {{- end }}
-    {{- if .Driver | eq "postgres" }}
+    {{- else if eq .Driver "postgres" }}
     services:
       # Spin up a postgres:15 container to be used as the dev-database for analysis.
       postgres15:
@@ -45,8 +44,7 @@ jobs:
           --health-start-period 10s
           --health-timeout 5s
           --health-retries 5
-    {{- end }}
-    {{- if .Driver | eq "maria" }}
+    {{- else if eq .Driver "mariadb" }}
     services:
       # Spin up a mariadb:11 container to be used as the dev-database for analysis.
       maria11:
@@ -71,16 +69,13 @@ jobs:
       - uses: ariga/atlas-action@v0
         with:
           dir: '{{ .Path }}'
-          {{- if .Driver | eq "mysql" }}
+          {{- if eq .Driver "mysql" }}
           dev-url: "mysql://root:pass@localhost:3306/dev"
-          {{- end }}
-          {{- if .Driver | eq "postgres" }}
+          {{- else if eq .Driver "postgres" }}
           dev-url: "postgres://postgres:pass@localhost:5432/dev?sslmode=disable"
-          {{- end }}
-          {{- if .Driver | eq "maria" }}
+          {{- else if eq .Driver "mariadb" }}
           dev-url: "maria://root:pass@localhost:3306/dev"
-          {{- end }}
-          {{- if .Driver | eq "sqlite" }}
+          {{- else if eq .Driver "sqlite" }}
           dev-url: "sqlite://dev?mode=memory"
           {{- end }}
           cloud-token: {{`${{secrets.ATLAS_CLOUD_TOKEN}}`}}

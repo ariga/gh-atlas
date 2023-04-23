@@ -15,11 +15,10 @@ func TestGen(t *testing.T) {
 		t.Run(f.Name(), func(t *testing.T) {
 			expected, err := os.ReadFile("testdata/" + f.Name())
 			require.NoError(t, err)
-			Driver := Driver(strings.TrimSuffix(f.Name(), ".yml"))
 			cfg := &Config{
 				Path:          "migrations",
 				DefaultBranch: "master",
-				Driver:        Driver,
+				Driver:        strings.TrimSuffix(f.Name(), ".yml"),
 			}
 			actual, err := Generate(cfg)
 			require.NoError(t, err)

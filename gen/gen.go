@@ -2,8 +2,8 @@ package gen
 
 import (
 	"bytes"
-	"embed"
-	"errors"
+	_ "embed"
+	"fmt"
 	"text/template"
 )
 
@@ -13,42 +13,27 @@ type (
 	Config struct {
 		Path          string
 		DefaultBranch string
-		Driver        Driver
+		Driver        string
 	}
 )
 
-const (
-	Postgres Driver = "postgres"
-	MySQL    Driver = "mysql"
-	MariaDB  Driver = "maria"
-	SQLite   Driver = "sqlite"
-)
-
-// GetDriver returns the Driver from string.
-func GetDriver(s string) (Driver, error) {
+func validateDriver(s string) error {
 	switch s {
-	case "postgres":
-		return Postgres, nil
-	case "mysql":
-		return MySQL, nil
-	case "mariadb":
-		return MariaDB, nil
-	case "sqlite":
-		return SQLite, nil
+	case "postgres", "mysql", "mariadb", "sqlite":
+		return nil
 	default:
-		return "", errors.New("unknown database Driver")
+		return fmt.Errorf("unknown driver %q", s)
 	}
 }
 
 var (
-	//go:embed *.tmpl
-	resource embed.FS
+	//go:embed atlas.tmpl
+	resource string
 	tmpl     *template.Template
 )
 
 func init() {
-	t := template.New("")
-	t, err := t.ParseFS(resource, "*.tmpl")
+	t, err := template.New("atlas.tmpl").Parse(resource)
 	if err != nil {
 		panic(err)
 	}
@@ -57,6 +42,9 @@ func init() {
 
 // Generate the content of the atlas ci lint yaml.
 func Generate(cfg *Config) ([]byte, error) {
+	if err := validateDriver(cfg.Driver); err != nil {
+		return nil, err
+	}
 	b := bytes.NewBuffer(nil)
 	if err := tmpl.ExecuteTemplate(b, "atlas.tmpl", cfg); err != nil {
 		return nil, err

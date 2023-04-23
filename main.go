@@ -3,7 +3,6 @@ package main
 import (
 	"math/rand"
 
-	"ariga.io/gh-atlas/gen"
 	"github.com/alecthomas/kong"
 	"github.com/pkg/browser"
 )
@@ -28,7 +27,7 @@ type InitCiCmd struct {
 
 func (i *InitCiCmd) Help() string {
 	return `Example:
-	  gh atlas init-ci --Driver="mysql" --token=$ATLAS_CLOUD_TOKEN "dir/migrations"`
+	  gh atlas init-ci --driver="mysql" --token=$ATLAS_CLOUD_TOKEN "dir/migrations"`
 }
 
 const (
@@ -46,11 +45,7 @@ func (i *InitCiCmd) Run() error {
 	if err = repo.CheckoutNewBranch(branchName); err != nil {
 		return err
 	}
-	Driver, err := gen.GetDriver(i.Driver)
-	if err != nil {
-		return err
-	}
-	if err = repo.AddAtlasYaml(i.DirPath, Driver, branchName, commitMsg); err != nil {
+	if err = repo.AddAtlasYAML(i.DirPath, i.Driver, branchName, commitMsg); err != nil {
 		return err
 	}
 	link, err := repo.CreatePR(prTitle, branchName)

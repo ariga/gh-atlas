@@ -56,12 +56,12 @@ func (r *Repository) CheckoutNewBranch(branchName string) error {
 	return err
 }
 
-// AddAtlasYaml create commit with atlas ci yaml file on the branch.
-func (r *Repository) AddAtlasYaml(dirPath string, Driver gen.Driver, branchName, commitMsg string) error {
+// AddAtlasYAML create commit with atlas ci yaml file on the branch.
+func (r *Repository) AddAtlasYAML(dirPath, driver, branchName, commitMsg string) error {
 	content, err := gen.Generate(&gen.Config{
 		Path:          dirPath,
 		DefaultBranch: r.defaultBranch,
-		Driver:        Driver,
+		Driver:        driver,
 	})
 	if err != nil {
 		return err
