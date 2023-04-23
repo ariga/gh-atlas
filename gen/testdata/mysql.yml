@@ -13,9 +13,9 @@ permissions:
 jobs:
   lint:
     services:
-      # Spin up a mysql:8.0.29 container to be used as the dev-database for analysis.
+      # Spin up a mysql:8 container to be used as the dev-database for analysis.
       mysql:
-        image: mysql:8.0.29
+        image: mysql:8
         env:
           MYSQL_DATABASE: dev
           MYSQL_ROOT_PASSWORD: pass
@@ -29,9 +29,9 @@ jobs:
           --health-retries 10
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.0.1
+      - uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Mandatory unless "latest" is set below.
+          fetch-depth: 0
       - uses: ariga/atlas-action@v0
         with:
           dir: 'migrations'

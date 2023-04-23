@@ -22,7 +22,7 @@ var cli struct {
 // InitCiCmd is the command for initializing a new Atlas CI workflow.
 type InitCiCmd struct {
 	DirPath string `arg:"" type:"-path" help:"Path inside repository containing the migration files."`
-	Dialect string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Dialect of the migration directory."`
+	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Dialect of the migration directory."`
 	Token   string `short:"t" help:"Atlas authentication token."`
 }
 
@@ -46,7 +46,7 @@ func (i *InitCiCmd) Run() error {
 	if err = repo.CheckoutNewBranch(branchName); err != nil {
 		return err
 	}
-	dialect, err := gen.GetDialect(i.Dialect)
+	dialect, err := gen.GetDialect(i.Driver)
 	if err != nil {
 		return err
 	}

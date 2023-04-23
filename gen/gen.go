@@ -9,8 +9,8 @@ import (
 
 type (
 	Dialect string
-	// Def is the definition passed to template parser
-	Def struct {
+	// Config passed to template parser
+	Config struct {
 		Path          string
 		DefaultBranch string
 		Dialect       Dialect
@@ -19,9 +19,9 @@ type (
 
 const (
 	Postgres Dialect = "postgres"
-	Mysql    Dialect = "mysql"
-	Mariadb  Dialect = "maria"
-	Sqlite   Dialect = "sqlite"
+	MySQL    Dialect = "mysql"
+	MariaDB  Dialect = "maria"
+	SQLite   Dialect = "sqlite"
 )
 
 // GetDialect returns the dialect from string.
@@ -30,11 +30,11 @@ func GetDialect(s string) (Dialect, error) {
 	case "postgres":
 		return Postgres, nil
 	case "mysql":
-		return Mysql, nil
+		return MySQL, nil
 	case "mariadb":
-		return Mariadb, nil
+		return MariaDB, nil
 	case "sqlite":
-		return Sqlite, nil
+		return SQLite, nil
 	default:
 		return "", errors.New("unknown database dialect")
 	}
@@ -56,9 +56,9 @@ func init() {
 }
 
 // Generate the content of the atlas ci lint yaml.
-func Generate(d *Def) ([]byte, error) {
+func Generate(cfg *Config) ([]byte, error) {
 	b := bytes.NewBuffer(nil)
-	if err := tmpl.ExecuteTemplate(b, "atlas.tmpl", d); err != nil {
+	if err := tmpl.ExecuteTemplate(b, "atlas.tmpl", cfg); err != nil {
 		return nil, err
 	}
 	return b.Bytes(), nil

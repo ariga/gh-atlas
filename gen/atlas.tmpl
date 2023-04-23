@@ -14,9 +14,9 @@ jobs:
   lint:
     {{- if .Dialect | eq "mysql" }}
     services:
-      # Spin up a mysql:8.0.29 container to be used as the dev-database for analysis.
+      # Spin up a mysql:8 container to be used as the dev-database for analysis.
       mysql:
-        image: mysql:8.0.29
+        image: mysql:8
         env:
           MYSQL_DATABASE: dev
           MYSQL_ROOT_PASSWORD: pass
@@ -31,14 +31,14 @@ jobs:
     {{- end }}
     {{- if .Dialect | eq "postgres" }}
     services:
-      # Spin up a postgres:14 container to be used as the dev-database for analysis.
-      postgres14:
-        image: postgres:14
+      # Spin up a postgres:15 container to be used as the dev-database for analysis.
+      postgres15:
+        image: postgres:15
         env:
           POSTGRES_DB: dev
           POSTGRES_PASSWORD: pass
         ports:
-          - 5430:5432
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -48,14 +48,14 @@ jobs:
     {{- end }}
     {{- if .Dialect | eq "maria" }}
     services:
-      # Spin up a mariadb:10.7 container to be used as the dev-database for analysis.
-      maria107:
-        image: mariadb:10.7
+      # Spin up a mariadb:11 container to be used as the dev-database for analysis.
+      maria11:
+        image: mariadb:11
         env:
           MYSQL_DATABASE: dev
           MYSQL_ROOT_PASSWORD: pass
         ports:
-          - 4306:3306
+          - 3306:3306
         options: >-
           --health-cmd "mysqladmin ping -ppass"
           --health-interval 10s
@@ -65,9 +65,9 @@ jobs:
     {{- end }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.0.1
+      - uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Mandatory unless "latest" is set below.
+          fetch-depth: 0
       - uses: ariga/atlas-action@v0
         with:
           dir: '{{ .Path }}'
@@ -75,10 +75,10 @@ jobs:
           dev-url: "mysql://root:pass@localhost:3306/dev"
           {{- end }}
           {{- if .Dialect | eq "postgres" }}
-          dev-url: "postgres://postgres:pass@localhost:5430/dev?sslmode=disable"
+          dev-url: "postgres://postgres:pass@localhost:5432/dev?sslmode=disable"
           {{- end }}
           {{- if .Dialect | eq "maria" }}
-          dev-url: "maria://root:pass@localhost:4306/dev"
+          dev-url: "maria://root:pass@localhost:3306/dev"
           {{- end }}
           {{- if .Dialect | eq "sqlite" }}
           dev-url: "sqlite://dev?mode=memory"

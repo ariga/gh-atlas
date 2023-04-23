@@ -58,7 +58,7 @@ func (r *Repository) CheckoutNewBranch(branchName string) error {
 
 // AddAtlasYaml create commit with atlas ci yaml file on the branch.
 func (r *Repository) AddAtlasYaml(dirPath string, dialect gen.Dialect, branchName, commitMsg string) error {
-	content, err := gen.Generate(&gen.Def{
+	content, err := gen.Generate(&gen.Config{
 		Path:          dirPath,
 		DefaultBranch: r.defaultBranch,
 		Dialect:       dialect,

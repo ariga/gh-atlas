@@ -16,12 +16,12 @@ func TestGen(t *testing.T) {
 			expected, err := os.ReadFile("testdata/" + f.Name())
 			require.NoError(t, err)
 			dialect := Dialect(strings.TrimSuffix(f.Name(), ".yml"))
-			def := &Def{
+			cfg := &Config{
 				Path:          "migrations",
 				DefaultBranch: "master",
 				Dialect:       dialect,
 			}
-			actual, err := Generate(def)
+			actual, err := Generate(cfg)
 			require.NoError(t, err)
 			require.Equal(t, strings.TrimSpace(string(expected)), strings.TrimSpace(string(actual)))
 		})
