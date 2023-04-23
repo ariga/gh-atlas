@@ -7,7 +7,7 @@ type Dialect string
 const (
 	Postgres Dialect = "postgres"
 	Mysql    Dialect = "mysql"
-	Mariadb  Dialect = "mariadb"
+	Mariadb  Dialect = "maria"
 	Sqlite   Dialect = "sqlite"
 )
 

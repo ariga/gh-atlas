@@ -11,8 +11,9 @@ import (
 // add logic to generate the code from the template
 
 type Def struct {
-	Path    string
-	Dialect atlas.Dialect
+	Path          string
+	DefaultBranch string
+	Dialect       atlas.Dialect
 }
 
 var (
@@ -32,9 +33,9 @@ func init() {
 
 // Generate some code
 func Generate(d Def) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, "", d); err != nil {
+	b := bytes.NewBuffer(nil)
+	if err := tmpl.ExecuteTemplate(b, "", d); err != nil {
 		return nil, err
 	}
-	return buf.Bytes(), nil
+	return b.Bytes(), nil
 }
