@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cli/go-gh"
 	"github.com/google/go-github/v49/github"
@@ -57,7 +56,7 @@ func (r *Repository) CheckoutNewBranch(branchName string) error {
 }
 
 // AddAtlasYaml create commit with atlas ci yaml file on the branch.
-func (r *Repository) AddAtlasYaml(dirPath, branchName, commitMsg string) error {
+func (r *Repository) AddAtlasYaml(_, branchName, commitMsg string) error {
 	// TODO implement yaml file creation
 	newFile := &github.RepositoryContentFileOptions{
 		Message: github.String(commitMsg),
@@ -68,8 +67,8 @@ func (r *Repository) AddAtlasYaml(dirPath, branchName, commitMsg string) error {
 	return err
 }
 
-// CreatePR creates a pull request for the branch.
-func (r *Repository) CreatePR(title string, branchName string) error {
+// CreatePR creates a pull request for the branch and returns the link to the PR.
+func (r *Repository) CreatePR(title string, branchName string) (string, error) {
 	newPR := &github.NewPullRequest{
 		Title: &title,
 		Head:  &branchName,
@@ -77,8 +76,7 @@ func (r *Repository) CreatePR(title string, branchName string) error {
 	}
 	pr, _, err := r.client.PullRequests.Create(r.ctx, r.owner, r.name, newPR)
 	if err != nil {
-		return err
+		return "", err
 	}
-	fmt.Println("created pull request:", pr.GetHTMLURL())
-	return nil
+	return pr.GetHTMLURL(), nil
 }

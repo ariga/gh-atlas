@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/alecthomas/kong"
+	"github.com/pkg/browser"
 )
 
 func main() {
@@ -46,7 +47,11 @@ func (i *InitCiCmd) Run() error {
 	if err = repo.AddAtlasYaml(i.DirPath, branchName, commitMsg); err != nil {
 		return err
 	}
-	return repo.CreatePR(prTitle, branchName)
+	link, err := repo.CreatePR(prTitle, branchName)
+	if err != nil {
+		return err
+	}
+	return browser.OpenURL(link)
 }
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
