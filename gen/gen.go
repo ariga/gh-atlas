@@ -41,14 +41,14 @@ func GetDialect(s string) (Dialect, error) {
 }
 
 var (
-	//go:embed templates/*
+	//go:embed *.tmpl
 	resource embed.FS
 	tmpl     *template.Template
 )
 
 func init() {
 	t := template.New("")
-	t, err := t.ParseFS(resource, "templates/*.tmpl")
+	t, err := t.ParseFS(resource, "*.tmpl")
 	if err != nil {
 		panic(err)
 	}
