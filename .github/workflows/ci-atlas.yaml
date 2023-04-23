@@ -1,0 +1,50 @@
+name: Atlas
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      - 'dir/migrations/*'
+# Permissions to write comments on the pull request.
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  lint:
+    services:
+      # Spin up a mysql:8.0.29 container to be used as the dev-database for analysis.
+      mysql:
+        image: mysql:8.0.29
+        env:
+          MYSQL_DATABASE: dev
+          MYSQL_ROOT_PASSWORD: pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -ppass"
+          --health-interval 10s
+          --health-start-period 10s
+          --health-timeout 5s
+          --health-retries 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.1
+        with:
+          fetch-depth: 0 # Mandatory unless "latest" is set below.
+      - uses: ariga/atlas-action@v0
+        with:
+          dir: 'dir/migrations'
+          dev-url: "mysql://root:pass@localhost:3306/dev"
+          cloud-token: ${{secrets.ATLAS_CLOUD_TOKEN}}
+  sync:
+    needs: lint
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ariga/atlas-sync-action@v0
+        with:
+          dir: 'dir/migrations'
+          driver: mysql
+          cloud-token: ${{secrets.ATLAS_CLOUD_TOKEN}}
