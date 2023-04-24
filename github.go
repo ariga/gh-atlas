@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
+	"net/http"
 
 	"ariga.io/gh-atlas/gen"
 	"github.com/cli/go-gh"
@@ -68,7 +70,10 @@ func (r *Repository) SetSecret(name, value string) error {
 		KeyID:          key.GetKeyID(),
 		EncryptedValue: base64.StdEncoding.EncodeToString([]byte(value)),
 	}
-	_, err = r.client.Actions.CreateOrUpdateRepoSecret(r.ctx, r.owner, r.name, secret)
+	res, err := r.client.Actions.CreateOrUpdateRepoSecret(r.ctx, r.owner, r.name, secret)
+	if res.StatusCode == http.StatusForbidden {
+		return fmt.Errorf("plese validate you have access to set secrets for this repository")
+	}
 	return err
 }
 
