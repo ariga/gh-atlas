@@ -1,0 +1,50 @@
+name: Atlas
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      - 'migrations/*'
+# Permissions to write comments on the pull request.
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  lint:
+    services:
+      # Spin up a postgres:15 container to be used as the dev-database for analysis.
+      postgres15:
+        image: postgres:15
+        env:
+          POSTGRES_DB: dev
+          POSTGRES_PASSWORD: pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-start-period 10s
+          --health-timeout 5s
+          --health-retries 5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: ariga/atlas-action@v0
+        with:
+          dir: 'migrations'
+          dev-url: "postgres://postgres:pass@localhost:5432/dev?sslmode=disable"
+          cloud-token: ${{secrets.ATLAS_CLOUD_TOKEN}}
+  sync:
+    needs: lint
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ariga/atlas-sync-action@v0
+        with:
+          dir: 'migrations'
+          driver: postgres
+          cloud-token: ${{secrets.ATLAS_CLOUD_TOKEN}}
