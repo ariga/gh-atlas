@@ -23,7 +23,7 @@ var cli struct {
 type InitCiCmd struct {
 	DirPath string `arg:"" type:"-path" help:"Path inside repository containing the migration files."`
 	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory."`
-	Token   string `short:"t" help:"(Required) Atlas authentication token."`
+	Token   string `required:"" short:"t" help:"(Required) Atlas authentication token."`
 }
 
 func (i *InitCiCmd) Help() string {
