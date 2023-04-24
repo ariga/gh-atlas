@@ -3,6 +3,7 @@ package main
 import (
 	"math/rand"
 
+	"ariga.io/gh-atlas/gen"
 	"github.com/alecthomas/kong"
 	"github.com/pkg/browser"
 )
@@ -22,7 +23,7 @@ var cli struct {
 type InitCiCmd struct {
 	DirPath string `arg:"" type:"-path" help:"Path inside repository containing the migration files."`
 	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory."`
-	Token   string `short:"t" help:"Atlas authentication token."`
+	Token   string `short:"t" help:"(Required) Atlas authentication token."`
 }
 
 func (i *InitCiCmd) Help() string {
@@ -37,15 +38,27 @@ const (
 
 // Run the init-ci command.
 func (i *InitCiCmd) Run() error {
+	var (
+		branchName = "atlas-ci-" + randSeq(6)
+		secretName = "ATLAS_CLOUD_TOKEN_" + randSeq(6)
+	)
 	repo, err := NewRepository()
 	if err != nil {
 		return err
 	}
-	branchName := "atlas-ci-" + randSeq(6)
+	if err = repo.SetSecret(secretName, i.Token); err != nil {
+		return err
+	}
 	if err = repo.CheckoutNewBranch(branchName); err != nil {
 		return err
 	}
-	if err = repo.AddAtlasYAML(i.DirPath, i.Driver, branchName, commitMsg); err != nil {
+	cfg := &gen.Config{
+		Path:          i.DirPath,
+		Driver:        i.Driver,
+		SecretName:    secretName,
+		DefaultBranch: repo.defaultBranch,
+	}
+	if err = repo.AddAtlasYAML(cfg, branchName, commitMsg); err != nil {
 		return err
 	}
 	link, err := repo.CreatePR(prTitle, branchName)

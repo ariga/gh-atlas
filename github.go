@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 
 	"ariga.io/gh-atlas/gen"
 	"github.com/cli/go-gh"
@@ -56,13 +57,24 @@ func (r *Repository) CheckoutNewBranch(branchName string) error {
 	return err
 }
 
+// SetSecret sets Secret for the repository.
+func (r *Repository) SetSecret(name, value string) error {
+	key, _, err := r.client.Actions.GetRepoPublicKey(r.ctx, r.owner, r.name)
+	if err != nil {
+		return err
+	}
+	secret := &github.EncryptedSecret{
+		Name:           name,
+		KeyID:          key.GetKeyID(),
+		EncryptedValue: base64.StdEncoding.EncodeToString([]byte(value)),
+	}
+	_, err = r.client.Actions.CreateOrUpdateRepoSecret(r.ctx, r.owner, r.name, secret)
+	return err
+}
+
 // AddAtlasYAML create commit with atlas ci yaml file on the branch.
-func (r *Repository) AddAtlasYAML(dirPath, driver, branchName, commitMsg string) error {
-	content, err := gen.Generate(&gen.Config{
-		Path:          dirPath,
-		DefaultBranch: r.defaultBranch,
-		Driver:        driver,
-	})
+func (r *Repository) AddAtlasYAML(cfg *gen.Config, branchName, commitMsg string) error {
+	content, err := gen.Generate(cfg)
 	if err != nil {
 		return err
 	}
