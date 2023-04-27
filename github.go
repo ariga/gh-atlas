@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -59,8 +60,17 @@ func (r *Repository) CheckoutNewBranch(branchName string) error {
 	return err
 }
 
-// SetSecret sets Secret for the repository.
+// SetSecret sets Secret for the repository with the given name and value.
+// if the secret already exists, it will not be updated.
 func (r *Repository) SetSecret(name, value string) error {
+	_, res, err := r.client.Actions.GetRepoSecret(r.ctx, r.owner, r.name, name)
+	if err != nil && res.StatusCode != http.StatusNotFound {
+		return err
+	}
+	if res.StatusCode == http.StatusOK {
+		fmt.Printf("secret %q already exists\n", name)
+		return nil
+	}
 	key, _, err := r.client.Actions.GetRepoPublicKey(r.ctx, r.owner, r.name)
 	if err != nil {
 		return err
@@ -70,9 +80,9 @@ func (r *Repository) SetSecret(name, value string) error {
 		KeyID:          key.GetKeyID(),
 		EncryptedValue: base64.StdEncoding.EncodeToString([]byte(value)),
 	}
-	res, err := r.client.Actions.CreateOrUpdateRepoSecret(r.ctx, r.owner, r.name, secret)
+	res, err = r.client.Actions.CreateOrUpdateRepoSecret(r.ctx, r.owner, r.name, secret)
 	if res.StatusCode == http.StatusForbidden {
-		return fmt.Errorf("plese validate you have access to set secrets for this repository")
+		return errors.New("forbidden: make sure you have access to set secrets for this repository")
 	}
 	return err
 }

@@ -40,7 +40,7 @@ const (
 func (i *InitCiCmd) Run() error {
 	var (
 		branchName = "atlas-ci-" + randSeq(6)
-		secretName = "ATLAS_CLOUD_TOKEN_" + randSeq(6)
+		secretName = "ATLAS_CLOUD_TOKEN"
 	)
 	repo, err := NewRepository()
 	if err != nil {
