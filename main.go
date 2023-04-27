@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/alecthomas/kong"
@@ -20,14 +21,15 @@ var cli struct {
 
 // InitCiCmd is the command for initializing a new Atlas CI workflow.
 type InitCiCmd struct {
-	DirPath string `arg:"" type:"-path" help:"Path inside repository containing the migration files."`
+	DirPath string `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
 	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory."`
 	Token   string `short:"t" help:"Atlas authentication token."`
 }
 
 func (i *InitCiCmd) Help() string {
 	return `Example:
-	  gh atlas init-ci --driver="mysql" --token=$ATLAS_CLOUD_TOKEN "dir/migrations"`
+	gh atlas init-ci --token=$ATLAS_CLOUD_TOKEN
+	gh atlas init-ci --token=$ATLAS_CLOUD_TOKEN --driver="mysql" "dir/migrations"`
 }
 
 const (
@@ -40,6 +42,24 @@ func (i *InitCiCmd) Run() error {
 	repo, err := NewRepository()
 	if err != nil {
 		return err
+	}
+	// if dir path is not defined we need to ask for the path and the driver
+	if i.DirPath == "" {
+		paths, err := repo.MigrationDirectories()
+		if err != nil {
+			return err
+		}
+		if len(paths) == 0 {
+			return fmt.Errorf("no migration directories found in the repository")
+		}
+		i.DirPath, err = ask("choose migration directory", paths)
+		if err != nil {
+			return err
+		}
+		i.Driver, err = ask("choose driver", []string{"mysql", "postgres", "mariadb", "sqlite"})
+		if err != nil {
+			return err
+		}
 	}
 	branchName := "atlas-ci-" + randSeq(6)
 	if err = repo.CheckoutNewBranch(branchName); err != nil {
