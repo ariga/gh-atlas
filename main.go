@@ -23,12 +23,12 @@ var cli struct {
 // InitCiCmd is the command for initializing a new Atlas CI workflow.
 type InitCiCmd struct {
 	DirPath string `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
-	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory."`
+	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
 	Token   string `short:"t" help:"Atlas authentication token."`
 }
 
 func (i *InitCiCmd) Help() string {
-	return `Example:
+	return `Examples:
 	gh atlas init-ci
 	gh atlas init-ci --token=$ATLAS_CLOUD_TOKEN
 	gh atlas init-ci --token=$ATLAS_CLOUD_TOKEN --driver="mysql" "dir/migrations"`
