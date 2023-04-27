@@ -3,6 +3,7 @@ module ariga.io/gh-atlas
 go 1.20
 
 require (
+	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/alecthomas/kong v0.7.1
 	github.com/cli/go-gh v1.2.1
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -11,8 +12,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.8.2
 )
-
-require github.com/AlecAivazis/survey/v2 v2.3.6
 
 require (
 	github.com/cli/safeexec v1.0.0 // indirect

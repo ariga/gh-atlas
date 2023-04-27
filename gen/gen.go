@@ -12,6 +12,7 @@ type (
 	// Config passed to template parser
 	Config struct {
 		Path          string
+		SecretName    string
 		DefaultBranch string
 		Driver        string
 	}
