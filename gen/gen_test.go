@@ -18,6 +18,7 @@ func TestGen(t *testing.T) {
 			cfg := &Config{
 				Path:          "migrations",
 				DefaultBranch: "master",
+				SecretName:    "ATLAS_CLOUD_TOKEN",
 				Driver:        strings.TrimSuffix(f.Name(), ".yml"),
 			}
 			actual, err := Generate(cfg)
