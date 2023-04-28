@@ -124,10 +124,8 @@ func (r *Repository) MigrationDirectories() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Return the path to directories containing atlas.sum files.
 	var paths []string
 	for _, e := range t.Entries {
-		path.Dir(e.GetPath())
 		if e.GetType() == "blob" && strings.HasSuffix(e.GetPath(), "atlas.sum") {
 			paths = append(paths, path.Dir(e.GetPath()))
 		}

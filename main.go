@@ -40,8 +40,6 @@ const (
 	secretName = "ATLAS_CLOUD_TOKEN"
 )
 
-var drivers = []string{"mysql", "postgres", "mariadb", "sqlite"}
-
 // Run the init-ci command.
 func (i *InitCiCmd) Run() error {
 	repo, err := NewRepository()
@@ -57,18 +55,15 @@ func (i *InitCiCmd) Run() error {
 		if len(dirs) == 0 {
 			return errors.New("no migration directories found in the repository")
 		}
-		i.DirPath, err = choose("choose migration directory", dirs)
-		if err != nil {
+		if i.DirPath, err = choose("choose migration directory", dirs); err != nil {
 			return err
 		}
-		i.Driver, err = choose("choose driver", drivers)
-		if err != nil {
+		if i.Driver, err = choose("choose driver", []string{"mysql", "postgres", "mariadb", "sqlite"}); err != nil {
 			return err
 		}
 	}
 	if i.Token == "" {
-		i.Token, err = input("enter Atlas Cloud token")
-		if err != nil {
+		if i.Token, err = input("enter Atlas Cloud token"); err != nil {
 			return err
 		}
 	}
