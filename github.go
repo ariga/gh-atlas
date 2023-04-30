@@ -80,7 +80,7 @@ func (r *Repository) SetSecret(name, value string) error {
 	if err != nil {
 		return err
 	}
-	// convert the decodedPK to a usable format of *[32]byte which is required by the box.SealAnonymous function.
+	// Convert the decodedPK to a usable format of *[32]byte which is required by the box.SealAnonymous function.
 	var publicKey [32]byte
 	copy(publicKey[:], decodedPK)
 	encrypted, err := box.SealAnonymous(nil, []byte(value), &publicKey, nil)
