@@ -46,26 +46,15 @@ func (i *InitCiCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	// if dir path is not defined we need to ask for the path and the driver
-	if i.DirPath == "" {
-		dirs, err := repo.MigrationDirectories()
-		if err != nil {
-			return err
-		}
-		if len(dirs) == 0 {
-			return errors.New("no migration directories found in the repository")
-		}
-		if i.DirPath, err = choose("choose migration directory", dirs); err != nil {
-			return err
-		}
-		if i.Driver, err = choose("choose driver", []string{"mysql", "postgres", "mariadb", "sqlite"}); err != nil {
-			return err
-		}
+	dirs, err := repo.MigrationDirectories()
+	if err != nil {
+		return err
 	}
-	if i.Token == "" {
-		if i.Token, err = input("enter Atlas Cloud token"); err != nil {
-			return err
-		}
+	if len(dirs) == 0 {
+		return errors.New("no migration directories found in the repository")
+	}
+	if err = setParams(i, dirs, nil); err != nil {
+		return err
 	}
 	if err = repo.SetSecret(secretName, i.Token); err != nil {
 		return err
