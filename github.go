@@ -10,6 +10,7 @@ import (
 	"ariga.io/gh-atlas/gen"
 	"github.com/cli/go-gh"
 	"github.com/google/go-github/v49/github"
+	"golang.org/x/crypto/nacl/box"
 )
 
 type Repository struct {
@@ -75,10 +76,21 @@ func (r *Repository) SetSecret(name, value string) error {
 	if err != nil {
 		return err
 	}
+	decodedPK, err := base64.StdEncoding.DecodeString(key.GetKey())
+	if err != nil {
+		return err
+	}
+	// Convert the decodedPK to a usable format of *[32]byte which is required by the box.SealAnonymous function.
+	var publicKey [32]byte
+	copy(publicKey[:], decodedPK)
+	encrypted, err := box.SealAnonymous(nil, []byte(value), &publicKey, nil)
+	if err != nil {
+		return errors.New("failed to encrypt secret value")
+	}
 	secret := &github.EncryptedSecret{
 		Name:           name,
 		KeyID:          key.GetKeyID(),
-		EncryptedValue: base64.StdEncoding.EncodeToString([]byte(value)),
+		EncryptedValue: base64.StdEncoding.EncodeToString(encrypted),
 	}
 	res, err = r.client.Actions.CreateOrUpdateRepoSecret(r.ctx, r.owner, r.name, secret)
 	if res.StatusCode == http.StatusForbidden {
