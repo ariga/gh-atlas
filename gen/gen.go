@@ -8,7 +8,6 @@ import (
 )
 
 type (
-	Driver string
 	// Config passed to template parser
 	Config struct {
 		Path          string
