@@ -46,8 +46,7 @@ jobs:
   integration-tests:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: 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
-      ATLAS_CLOUD_TOKEN: ${{ secrets.ATLAS_CLOUD_TOKEN }}
+      GH_TOKEN: ${{ secrets.USER_TOKEN }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
@@ -64,4 +63,17 @@ jobs:
         run: |
           gh extension install .
       - name: Run GitHub atlas extension
-        run: gh atlas init-ci --token=$ATLAS_CLOUD_TOKEN --driver="mysql" "testdata/migrations"
+        run: |
+          gh atlas init-ci --token=${{ secrets.ATLAS_CLOUD_TOKEN }} --driver="mysql" "testdata/migrations"
+          sleep 3
+      - name: validate pull request is created
+        run: |
+          PULL_REQUESTS=$(gh pr list --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length)
+          if [ $PULL_REQUESTS -ne 1 ]; then
+              echo "Pull request not created"
+              exit 1
+          fi
+      - name: cleanup the created pr and branch
+        run: |
+          BRANCH=$(gh pr list --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq -r '.[0].headRefName')
+          gh pr close $BRANCH -d

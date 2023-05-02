@@ -67,7 +67,7 @@ func (i *InitCiCmd) Run() error {
 		return err
 	}
 	if err = browser.OpenURL(link); err != nil {
-		fmt.Printf("Failed to open browser: %v\n", err)
+		fmt.Printf("Failed to open %s in browser: %v\n", link, err)
 	}
 	return nil
 }
