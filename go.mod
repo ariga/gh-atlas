@@ -4,10 +4,13 @@ go 1.20
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
+	github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2
 	github.com/alecthomas/kong v0.7.1
 	github.com/cli/go-gh v1.2.1
+	github.com/creack/pty v1.1.17
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/go-github/v49 v49.1.0
+	github.com/hinshun/vt10x v0.0.0-20220119200601-820417d04eec
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.8.2

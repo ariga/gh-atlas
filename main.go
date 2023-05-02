@@ -11,7 +11,7 @@ import (
 
 func main() {
 	ctx := kong.Parse(&cli)
-	err := ctx.Run(&cli)
+	err := ctx.Run(&Context{Testing: false})
 	ctx.FatalIfErrorf(err)
 }
 
@@ -20,12 +20,18 @@ var cli struct {
 	InitCI InitCiCmd `cmd:"" help:"Initialize a new Atlas CI configuration."`
 }
 
-// InitCiCmd is the command for initializing a new Atlas CI workflow.
-type InitCiCmd struct {
-	DirPath string `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
-	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
-	Token   string `short:"t" help:"Atlas authentication token."`
-}
+type (
+	// InitCiCmd is the command for initializing a new Atlas CI workflow.
+	InitCiCmd struct {
+		DirPath string `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
+		Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
+		Token   string `short:"t" help:"Atlas authentication token."`
+	}
+	Context struct {
+		// Testing is a flag used for testing.
+		Testing bool
+	}
+)
 
 func (i *InitCiCmd) Help() string {
 	return `Examples:
@@ -41,8 +47,8 @@ const (
 )
 
 // Run the init-ci command.
-func (i *InitCiCmd) Run() error {
-	repo, err := NewRepository()
+func (i *InitCiCmd) Run(ctx *Context) error {
+	repo, err := NewRepository(ctx)
 	if err != nil {
 		return err
 	}
@@ -53,7 +59,7 @@ func (i *InitCiCmd) Run() error {
 	if len(dirs) == 0 {
 		return errors.New("no migration directories found in the repository")
 	}
-	if err = setParams(i, dirs, nil); err != nil {
+	if err = setParams(i, dirs); err != nil {
 		return err
 	}
 	if err = repo.SetSecret(secretName, i.Token); err != nil {
@@ -64,10 +70,9 @@ func (i *InitCiCmd) Run() error {
 		return err
 	}
 	cfg := &gen.Config{
-		Path:          i.DirPath,
-		Driver:        i.Driver,
-		SecretName:    secretName,
-		DefaultBranch: repo.defaultBranch,
+		Path:       i.DirPath,
+		Driver:     i.Driver,
+		SecretName: secretName,
 	}
 	if err = repo.AddAtlasYAML(cfg, branchName, commitMsg); err != nil {
 		return err

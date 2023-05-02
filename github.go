@@ -15,6 +15,16 @@ import (
 	"golang.org/x/crypto/nacl/box"
 )
 
+// GitHubRepository is the interface for interacting with a GitHub repository.
+type GitHubRepository interface {
+	CheckoutNewBranch(branchName string) error
+	SetSecret(name, value string) error
+	AddAtlasYAML(cfg *gen.Config, branchName, commitMsg string) error
+	CreatePR(title string, branchName string) (string, error)
+	MigrationDirectories() ([]string, error)
+}
+
+// Repository is the implementation of the GitHubRepository interface.
 type Repository struct {
 	ctx           context.Context
 	owner         string
@@ -23,7 +33,11 @@ type Repository struct {
 	client        *github.Client
 }
 
-func NewRepository() (*Repository, error) {
+// NewRepository returns a new GitHubRepository.
+func NewRepository(cmdCtx *Context) (GitHubRepository, error) {
+	if cmdCtx.Testing {
+		return &MockRepo{}, nil
+	}
 	currRepo, err := gh.CurrentRepository()
 	if err != nil {
 		return nil, err
@@ -103,6 +117,7 @@ func (r *Repository) SetSecret(name, value string) error {
 
 // AddAtlasYAML create commit with atlas ci yaml file on the branch.
 func (r *Repository) AddAtlasYAML(cfg *gen.Config, branchName, commitMsg string) error {
+	cfg.DefaultBranch = r.defaultBranch
 	content, err := gen.Generate(cfg)
 	if err != nil {
 		return err
@@ -143,4 +158,23 @@ func (r *Repository) MigrationDirectories() ([]string, error) {
 		}
 	}
 	return paths, nil
+}
+
+// MockRepo is a mock implementation of the Repo interface used for testing.
+type MockRepo struct{}
+
+func (r *MockRepo) CheckoutNewBranch(string) error {
+	return nil
+}
+func (r *MockRepo) SetSecret(string, string) error {
+	return nil
+}
+func (r *MockRepo) AddAtlasYAML(*gen.Config, string, string) error {
+	return nil
+}
+func (r *MockRepo) CreatePR(string, string) (string, error) {
+	return "", nil
+}
+func (r *MockRepo) MigrationDirectories() ([]string, error) {
+	return []string{"dir1", "dir2"}, nil
 }
