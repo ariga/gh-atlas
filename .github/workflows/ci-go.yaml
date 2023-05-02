@@ -64,4 +64,5 @@ jobs:
         run: go test -race -run "^TestIntegration_" ./...
         env:
           GH_ATLAS_INTEGRATION: 1
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           ATLAS_CLOUD_TOKEN: ${{ secrets.ATLAS_CLOUD_TOKEN }}
