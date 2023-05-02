@@ -43,3 +43,25 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run tests
         run: go test -race ./...
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+      - name: install gh cli
+        run: |
+          sudo apt update
+          sudo apt install gh -y
+      - name: build extension
+        run: |
+          go build
+      - name: install extension
+        run: |
+          gh extension install .
+      - name: Run integration tests
+        run: go test -race -run "^TestIntegration_" ./...
+        env:
+          GH_ATLAS_INTEGRATION: 1
+          ATLAS_CLOUD_TOKEN: ${{ secrets.ATLAS_CLOUD_TOKEN }}
