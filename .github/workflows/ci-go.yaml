@@ -46,15 +46,14 @@ jobs:
   integration-tests:
     runs-on: ubuntu-latest
     env:
-      GH_ATLAS_INTEGRATION: 1
-      GH_TOKEN: ${{ github.token }}
+      GH_TOKEN: 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
       ATLAS_CLOUD_TOKEN: ${{ secrets.ATLAS_CLOUD_TOKEN }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
         with:
           go-version: '1.20'
-      - name: install gh cli
+      - name: install GitHub cli
         run: |
           sudo apt update
           sudo apt install gh -y
@@ -64,5 +63,5 @@ jobs:
       - name: install extension
         run: |
           gh extension install .
-      - name: Run gh atlas extension
+      - name: Run GitHub atlas extension
         run: gh atlas init-ci --token=$ATLAS_CLOUD_TOKEN --driver="mysql" "testdata/migrations"
