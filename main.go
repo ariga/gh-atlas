@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 
 	"ariga.io/gh-atlas/gen"
@@ -65,7 +66,10 @@ func (i *InitCiCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	return browser.OpenURL(link)
+	if err = browser.OpenURL(link); err != nil {
+		fmt.Printf("Failed to open browser: %v\n", err)
+	}
+	return nil
 }
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
