@@ -27,7 +27,7 @@ jobs:
           args: --verbose
           skip-pkg-cache: true
   unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4

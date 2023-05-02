@@ -95,17 +95,17 @@ func TestRunInitCICmd(t *testing.T) {
 func RunTest(t *testing.T, prompt func(*expect.Console), test func() error) {
 	pty, tty, err := pseudotty.Open()
 	require.NoError(t, err)
+	// virtual terminal needed for way to interpret terminal / ANSI escape sequences
+	// for more info see: https://github.com/go-survey/survey#testing
 	term := vt10x.New(vt10x.WithWriter(tty))
 	c, err := expect.NewConsole(expect.WithStdin(pty), expect.WithStdout(term), expect.WithCloser(pty, tty))
 	require.NoError(t, err)
 	defer c.Close()
-
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
 		prompt(c)
 	}()
-
 	// replace stdin and stdout with the tty so that the user can interact with the console
 	originalStdin := os.Stdin
 	originalStdout := os.Stdout
@@ -115,10 +115,8 @@ func RunTest(t *testing.T, prompt func(*expect.Console), test func() error) {
 		os.Stdin = originalStdin
 		os.Stdout = originalStdout
 	}()
-
 	err = test()
 	require.NoError(t, err)
-
 	err = c.Tty().Close()
 	require.NoError(t, err)
 	<-done
