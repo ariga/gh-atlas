@@ -2,16 +2,29 @@ package main
 
 import (
 	"errors"
+	"log"
 	"math/rand"
 
 	"ariga.io/gh-atlas/gen"
 	"github.com/alecthomas/kong"
+	"github.com/cli/go-gh"
+	"github.com/google/go-github/v49/github"
 	"github.com/pkg/browser"
 )
 
 func main() {
+	c, err := gh.HTTPClient(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	client := github.NewClient(c)
 	ctx := kong.Parse(&cli)
-	err := ctx.Run(&Context{Testing: false})
+	err = ctx.Run(&githubClient{
+		Git:          client.Git,
+		Repositories: client.Repositories,
+		Actions:      client.Actions,
+		PullRequests: client.PullRequests,
+	})
 	ctx.FatalIfErrorf(err)
 }
 
@@ -41,14 +54,17 @@ func (i *InitCiCmd) Help() string {
 }
 
 const (
-	commitMsg  = "Add Atlas CI configuration yaml to GitHub Workflows"
-	prTitle    = "Add Atlas CI configuration"
-	secretName = "ATLAS_CLOUD_TOKEN"
+	commitMsg = "Add Atlas CI configuration yaml to GitHub Workflows"
+	prTitle   = "Add Atlas CI configuration"
 )
 
 // Run the init-ci command.
-func (i *InitCiCmd) Run(ctx *Context) error {
-	repo, err := NewRepository(ctx)
+func (i *InitCiCmd) Run(client *githubClient) error {
+	var (
+		branchName = "atlas-ci-" + randSeq(6)
+		secretName = "ATLAS_CLOUD_TOKEN"
+	)
+	repo, err := NewRepository(client)
 	if err != nil {
 		return err
 	}
@@ -65,7 +81,6 @@ func (i *InitCiCmd) Run(ctx *Context) error {
 	if err = repo.SetSecret(secretName, i.Token); err != nil {
 		return err
 	}
-	branchName := "atlas-ci-" + randSeq(6)
 	if err = repo.CheckoutNewBranch(branchName); err != nil {
 		return err
 	}
