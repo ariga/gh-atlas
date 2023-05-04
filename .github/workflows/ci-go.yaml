@@ -43,7 +43,7 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run tests
         run: go test -race ./...
-  integration-tests:
+  integration-test:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.USER_TOKEN }}
@@ -56,24 +56,36 @@ jobs:
         run: |
           sudo apt update
           sudo apt install gh -y
+      - name: validate pull request is not created yet
+        run: |
+          PULL_REQUESTS=$(gh pr list --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length)
+          if [ $PULL_REQUESTS -ne 0 ]; then
+              echo "Pull request already created"
+              exit 1
+          fi
       - name: build extension
         run: |
           go build
       - name: install extension
         run: |
           gh extension install .
-      - name: Run GitHub atlas extension
+      - name: run GitHub atlas extension
         run: |
-          gh atlas init-ci --token=${{ secrets.ATLAS_CLOUD_TOKEN }} --driver="mysql" "testdata/migrations"
-          sleep 3
+          gh atlas init-ci --token=${{ secrets.TEST_ATLAS_TOKEN }} --driver="mysql" "testdata/migrations"
+      - uses: nick-fields/retry@v2
+        with:
+          timeout_seconds: 20
+          retry_wait_seconds: 5
+          max_attempts: 4
+          command: PULL_REQUESTS=$(gh pr list --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length)
       - name: validate pull request is created
         run: |
-          PULL_REQUESTS=$(gh pr list --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length)
           if [ $PULL_REQUESTS -ne 1 ]; then
               echo "Pull request not created"
               exit 1
           fi
-      - name: cleanup the created pr and branch
+      - name: cleanup the created pr, branch and secret
         run: |
           BRANCH=$(gh pr list --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq -r '.[0].headRefName')
           gh pr close $BRANCH -d
+          gh secret delete ATLAS_CLOUD_TOKEN
