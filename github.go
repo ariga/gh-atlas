@@ -76,6 +76,7 @@ type Repository struct {
 	client        *githubClient
 }
 
+// NewRepository creates a new repository object.
 func NewRepository(client *githubClient) (*Repository, error) {
 	currRepo, err := gh.CurrentRepository()
 	if err != nil {
