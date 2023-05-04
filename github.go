@@ -14,53 +14,28 @@ import (
 )
 
 type (
-	getRefer interface {
-		GetRef(ctx context.Context, owner string, repo string, ref string) (*github.Reference, *github.Response, error)
-	}
-	createRefer interface {
-		CreateRef(ctx context.Context, owner string, repo string, ref *github.Reference) (*github.Reference, *github.Response, error)
-	}
-	repoGetter interface {
-		Get(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
-	}
-	fileCreator interface {
-		CreateFile(ctx context.Context, owner, repo, path string, opts *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error)
-	}
-	getRepoSecret interface {
-		GetRepoSecret(ctx context.Context, owner, repo, name string) (*github.Secret, *github.Response, error)
-	}
-	createOrUpdateRepoSecret interface {
-		CreateOrUpdateRepoSecret(ctx context.Context, owner, repo string, eSecret *github.EncryptedSecret) (*github.Response, error)
-	}
-	getRepoPublicKey interface {
-		GetRepoPublicKey(ctx context.Context, owner, repo string) (*github.PublicKey, *github.Response, error)
-	}
-	prCreator interface {
-		Create(ctx context.Context, owner, repo string, pr *github.NewPullRequest) (*github.PullRequest, *github.Response, error)
-	}
 	// gitService handles communication with the git data related methods of the GitHub API.
 	gitService interface {
-		getRefer
-		createRefer
+		GetRef(ctx context.Context, owner string, repo string, ref string) (*github.Reference, *github.Response, error)
+		CreateRef(ctx context.Context, owner string, repo string, ref *github.Reference) (*github.Reference, *github.Response, error)
 	}
 	// repositoriesService handles communication with the repository related methods of the GitHub API.
 	repositoriesService interface {
-		repoGetter
-		fileCreator
+		Get(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
+		CreateFile(ctx context.Context, owner, repo, path string, opts *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error)
 	}
 	// actionsService handles communication with the actions related methods of the GitHub API.
 	actionsService interface {
-		getRepoSecret
-		createOrUpdateRepoSecret
-		getRepoPublicKey
+		GetRepoSecret(ctx context.Context, owner, repo, name string) (*github.Secret, *github.Response, error)
+		CreateOrUpdateRepoSecret(ctx context.Context, owner, repo string, eSecret *github.EncryptedSecret) (*github.Response, error)
+		GetRepoPublicKey(ctx context.Context, owner, repo string) (*github.PublicKey, *github.Response, error)
 	}
 	// pullRequestsService handles communication with the pull request related methods of the GitHub API.
 	pullRequestsService interface {
-		prCreator
+		Create(ctx context.Context, owner, repo string, pr *github.NewPullRequest) (*github.PullRequest, *github.Response, error)
 	}
 	// githubClient is a wrapper around the GitHub API client.
 	githubClient struct {
-		// Services used for talking to different parts of the GitHub API.
 		Git          gitService
 		Repositories repositoriesService
 		Actions      actionsService

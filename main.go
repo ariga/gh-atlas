@@ -12,17 +12,17 @@ import (
 )
 
 func main() {
-	httpClient, err := gh.HTTPClient(nil)
+	c, err := gh.HTTPClient(nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	c := github.NewClient(httpClient)
+	client := github.NewClient(c)
 	ctx := kong.Parse(&cli)
 	err = ctx.Run(&githubClient{
-		Git:          c.Git,
-		Repositories: c.Repositories,
-		Actions:      c.Actions,
-		PullRequests: c.PullRequests,
+		Git:          client.Git,
+		Repositories: client.Repositories,
+		Actions:      client.Actions,
+		PullRequests: client.PullRequests,
 	})
 	ctx.FatalIfErrorf(err)
 }
