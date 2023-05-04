@@ -78,7 +78,7 @@ jobs:
           {{- else if eq .Driver "sqlite" }}
           dev-url: "sqlite://dev?mode=memory"
           {{- end }}
-          cloud-token: {{`${{secrets.`}}{{ .SecretName }}{{`}}`}}
+          cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
   sync:
     needs: lint
     if: github.ref == 'refs/heads/{{ .DefaultBranch }}'
@@ -89,4 +89,4 @@ jobs:
         with:
           dir: '{{ .Path }}'
           driver: {{ .Driver }}
-          cloud-token: {{`${{secrets.`}}{{ .SecretName }}{{`}}`}}
+          cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
