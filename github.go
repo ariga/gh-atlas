@@ -13,26 +13,52 @@ import (
 	"golang.org/x/crypto/nacl/box"
 )
 
+type (
+	// gitService handles communication with the git data related methods of the GitHub API.
+	gitService interface {
+		GetRef(ctx context.Context, owner string, repo string, ref string) (*github.Reference, *github.Response, error)
+		CreateRef(ctx context.Context, owner string, repo string, ref *github.Reference) (*github.Reference, *github.Response, error)
+	}
+	// repositoriesService handles communication with the repository related methods of the GitHub API.
+	repositoriesService interface {
+		Get(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
+		CreateFile(ctx context.Context, owner, repo, path string, opts *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error)
+	}
+	// actionsService handles communication with the actions related methods of the GitHub API.
+	actionsService interface {
+		GetRepoSecret(ctx context.Context, owner, repo, name string) (*github.Secret, *github.Response, error)
+		CreateOrUpdateRepoSecret(ctx context.Context, owner, repo string, eSecret *github.EncryptedSecret) (*github.Response, error)
+		GetRepoPublicKey(ctx context.Context, owner, repo string) (*github.PublicKey, *github.Response, error)
+	}
+	// pullRequestsService handles communication with the pull request related methods of the GitHub API.
+	pullRequestsService interface {
+		Create(ctx context.Context, owner, repo string, pr *github.NewPullRequest) (*github.PullRequest, *github.Response, error)
+	}
+	// githubClient is a wrapper around the GitHub API client.
+	githubClient struct {
+		Git          gitService
+		Repositories repositoriesService
+		Actions      actionsService
+		PullRequests pullRequestsService
+	}
+)
+
 type Repository struct {
 	ctx           context.Context
 	owner         string
 	name          string
 	defaultBranch string
-	client        *github.Client
+	client        *githubClient
 }
 
-func NewRepository() (*Repository, error) {
+// NewRepository creates a new repository object.
+func NewRepository(client *githubClient) (*Repository, error) {
 	currRepo, err := gh.CurrentRepository()
 	if err != nil {
 		return nil, err
 	}
-	httpClient, err := gh.HTTPClient(nil)
-	if err != nil {
-		return nil, err
-	}
-	ghClient := github.NewClient(httpClient)
 	ctx := context.Background()
-	repoData, _, err := ghClient.Repositories.Get(ctx, currRepo.Owner(), currRepo.Name())
+	repoData, _, err := client.Repositories.Get(ctx, currRepo.Owner(), currRepo.Name())
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +67,7 @@ func NewRepository() (*Repository, error) {
 		owner:         currRepo.Owner(),
 		name:          currRepo.Name(),
 		defaultBranch: repoData.GetDefaultBranch(),
-		client:        ghClient,
+		client:        client,
 	}, nil
 }
 
