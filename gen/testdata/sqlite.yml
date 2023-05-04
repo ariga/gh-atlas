@@ -21,7 +21,7 @@ jobs:
         with:
           dir: 'migrations'
           dev-url: "sqlite://dev?mode=memory"
-          cloud-token: ${{secrets.ATLAS_CLOUD_TOKEN}}
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
   sync:
     needs: lint
     if: github.ref == 'refs/heads/master'
@@ -32,4 +32,4 @@ jobs:
         with:
           dir: 'migrations'
           driver: sqlite
-          cloud-token: ${{secrets.ATLAS_CLOUD_TOKEN}}
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
