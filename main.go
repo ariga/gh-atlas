@@ -33,18 +33,12 @@ var cli struct {
 	InitCI InitCiCmd `cmd:"" help:"Initialize a new Atlas CI configuration."`
 }
 
-type (
-	// InitCiCmd is the command for initializing a new Atlas CI workflow.
-	InitCiCmd struct {
-		DirPath string `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
-		Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
-		Token   string `short:"t" help:"Atlas authentication token."`
-	}
-	Context struct {
-		// Testing is a flag used for testing.
-		Testing bool
-	}
-)
+// InitCiCmd is the command for initializing a new Atlas CI workflow.
+type InitCiCmd struct {
+	DirPath string `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
+	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
+	Token   string `short:"t" help:"Atlas authentication token."`
+}
 
 func (i *InitCiCmd) Help() string {
 	return `Examples:
@@ -85,9 +79,10 @@ func (i *InitCiCmd) Run(client *githubClient) error {
 		return err
 	}
 	cfg := &gen.Config{
-		Path:       i.DirPath,
-		Driver:     i.Driver,
-		SecretName: secretName,
+		Path:          i.DirPath,
+		Driver:        i.Driver,
+		SecretName:    secretName,
+		DefaultBranch: repo.defaultBranch,
 	}
 	if err = repo.AddAtlasYAML(cfg, branchName, commitMsg); err != nil {
 		return err

@@ -1,15 +1,67 @@
 package main
 
 import (
+	"context"
+	"net/http"
 	"os"
 	"testing"
 
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Netflix/go-expect"
 	pseudotty "github.com/creack/pty"
+	"github.com/google/go-github/v49/github"
 	"github.com/hinshun/vt10x"
 	"github.com/stretchr/testify/require"
 )
+
+// mockService is a mock implementation of necessary GitHub API methods.
+type mockService struct{}
+
+func (m *mockService) GetRef(context.Context, string, string, string) (*github.Reference, *github.Response, error) {
+	ref := &github.Reference{
+		Object: &github.GitObject{
+			SHA: nil,
+		},
+	}
+	return ref, nil, nil
+}
+func (m *mockService) CreateRef(context.Context, string, string, *github.Reference) (*github.Reference, *github.Response, error) {
+	return nil, nil, nil
+}
+func (m *mockService) GetTree(context.Context, string, string, string, bool) (*github.Tree, *github.Response, error) {
+	tree := &github.Tree{
+		Entries: []*github.TreeEntry{
+			{
+				Path: github.String("migrations/atlas.sum"),
+				Type: github.String("blob"),
+			},
+		},
+	}
+	return tree, nil, nil
+}
+func (m *mockService) Get(context.Context, string, string) (*github.Repository, *github.Response, error) {
+	return nil, nil, nil
+}
+func (m *mockService) CreateFile(context.Context, string, string, string, *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error) {
+	return nil, nil, nil
+}
+func (m *mockService) GetRepoSecret(context.Context, string, string, string) (*github.Secret, *github.Response, error) {
+	res := &github.Response{
+		Response: &http.Response{
+			StatusCode: http.StatusOK,
+		},
+	}
+	return nil, res, nil
+}
+func (m *mockService) CreateOrUpdateRepoSecret(context.Context, string, string, *github.EncryptedSecret) (*github.Response, error) {
+	return nil, nil
+}
+func (m *mockService) GetRepoPublicKey(context.Context, string, string) (*github.PublicKey, *github.Response, error) {
+	return nil, nil, nil
+}
+func (m *mockService) Create(context.Context, string, string, *github.NewPullRequest) (*github.PullRequest, *github.Response, error) {
+	return nil, nil, nil
+}
 
 func TestRunInitCICmd(t *testing.T) {
 	var tests = []struct {
@@ -22,7 +74,7 @@ func TestRunInitCICmd(t *testing.T) {
 			name: "all arg and flags supplied",
 			cmd: &InitCiCmd{
 				DirPath: "path",
-				Driver:  "driver",
+				Driver:  "postgres",
 				Token:   "token",
 			},
 			prompt: func(c *expect.Console) {
@@ -31,7 +83,7 @@ func TestRunInitCICmd(t *testing.T) {
 			},
 			expected: &InitCiCmd{
 				DirPath: "path",
-				Driver:  "driver",
+				Driver:  "postgres",
 				Token:   "token",
 			},
 		},
@@ -39,7 +91,7 @@ func TestRunInitCICmd(t *testing.T) {
 			name: "no token flag supplied",
 			cmd: &InitCiCmd{
 				DirPath: "path",
-				Driver:  "driver",
+				Driver:  "postgres",
 			},
 			prompt: func(c *expect.Console) {
 				_, err := c.ExpectString("enter Atlas Cloud token")
@@ -51,7 +103,7 @@ func TestRunInitCICmd(t *testing.T) {
 			},
 			expected: &InitCiCmd{
 				DirPath: "path",
-				Driver:  "driver",
+				Driver:  "postgres",
 				Token:   "token",
 			},
 		},
@@ -73,7 +125,7 @@ func TestRunInitCICmd(t *testing.T) {
 				require.NoError(t, err)
 			},
 			expected: &InitCiCmd{
-				DirPath: "dir2",
+				DirPath: "migrations",
 				Driver:  "postgres",
 				Token:   "token",
 			},
@@ -83,10 +135,16 @@ func TestRunInitCICmd(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				RunTest(t, tt.prompt, func() error {
-					return tt.cmd.Run(&Context{Testing: true})
+					client := &githubClient{
+						Git:          &mockService{},
+						Repositories: &mockService{},
+						Actions:      &mockService{},
+						PullRequests: &mockService{},
+					}
+					return tt.cmd.Run(client)
 				})
+				require.Equal(t, tt.expected, tt.cmd)
 			})
-			require.Equal(t, tt.expected, tt.cmd)
 		}
 	}
 }

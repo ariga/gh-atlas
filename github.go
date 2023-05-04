@@ -130,7 +130,6 @@ func (r *Repository) SetSecret(name, value string) error {
 
 // AddAtlasYAML create commit with atlas ci yaml file on the branch.
 func (r *Repository) AddAtlasYAML(cfg *gen.Config, branchName, commitMsg string) error {
-	cfg.DefaultBranch = r.defaultBranch
 	content, err := gen.Generate(cfg)
 	if err != nil {
 		return err
