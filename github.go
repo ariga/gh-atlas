@@ -13,26 +13,76 @@ import (
 	"golang.org/x/crypto/nacl/box"
 )
 
+type (
+	getRefer interface {
+		GetRef(ctx context.Context, owner string, repo string, ref string) (*github.Reference, *github.Response, error)
+	}
+	createRefer interface {
+		CreateRef(ctx context.Context, owner string, repo string, ref *github.Reference) (*github.Reference, *github.Response, error)
+	}
+	repoGetter interface {
+		Get(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
+	}
+	fileCreator interface {
+		CreateFile(ctx context.Context, owner, repo, path string, opts *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error)
+	}
+	getRepoSecret interface {
+		GetRepoSecret(ctx context.Context, owner, repo, name string) (*github.Secret, *github.Response, error)
+	}
+	createOrUpdateRepoSecret interface {
+		CreateOrUpdateRepoSecret(ctx context.Context, owner, repo string, eSecret *github.EncryptedSecret) (*github.Response, error)
+	}
+	getRepoPublicKey interface {
+		GetRepoPublicKey(ctx context.Context, owner, repo string) (*github.PublicKey, *github.Response, error)
+	}
+	prCreator interface {
+		Create(ctx context.Context, owner, repo string, pr *github.NewPullRequest) (*github.PullRequest, *github.Response, error)
+	}
+	// gitService handles communication with the git data related methods of the GitHub API.
+	gitService interface {
+		getRefer
+		createRefer
+	}
+	// repositoriesService handles communication with the repository related methods of the GitHub API.
+	repositoriesService interface {
+		repoGetter
+		fileCreator
+	}
+	// actionsService handles communication with the actions related methods of the GitHub API.
+	actionsService interface {
+		getRepoSecret
+		createOrUpdateRepoSecret
+		getRepoPublicKey
+	}
+	// pullRequestsService handles communication with the pull request related methods of the GitHub API.
+	pullRequestsService interface {
+		prCreator
+	}
+	// githubClient is a wrapper around the GitHub API client.
+	githubClient struct {
+		// Services used for talking to different parts of the GitHub API.
+		Git          gitService
+		Repositories repositoriesService
+		Actions      actionsService
+		PullRequests pullRequestsService
+	}
+)
+
 type Repository struct {
 	ctx           context.Context
 	owner         string
 	name          string
 	defaultBranch string
-	client        *github.Client
+	client        *githubClient
 }
 
-func NewRepository() (*Repository, error) {
+func NewRepository(client *githubClient) (*Repository, error) {
 	currRepo, err := gh.CurrentRepository()
 	if err != nil {
 		return nil, err
 	}
-	httpClient, err := gh.HTTPClient(nil)
-	if err != nil {
-		return nil, err
-	}
-	ghClient := github.NewClient(httpClient)
 	ctx := context.Background()
-	repoData, _, err := ghClient.Repositories.Get(ctx, currRepo.Owner(), currRepo.Name())
+	repoData, _, err := client.Repositories.Get(ctx, currRepo.Owner(), currRepo.Name())
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +91,7 @@ func NewRepository() (*Repository, error) {
 		owner:         currRepo.Owner(),
 		name:          currRepo.Name(),
 		defaultBranch: repoData.GetDefaultBranch(),
-		client:        ghClient,
+		client:        client,
 	}, nil
 }
 
