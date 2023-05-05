@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"ariga.io/gh-atlas/gen"
-	"github.com/cli/go-gh"
+	"github.com/cli/go-gh/pkg/repository"
 	"github.com/google/go-github/v49/github"
 	"golang.org/x/crypto/nacl/box"
 )
@@ -52,20 +52,15 @@ type Repository struct {
 }
 
 // NewRepository creates a new repository object.
-func NewRepository(client *githubClient) (*Repository, error) {
-	currRepo, err := gh.CurrentRepository()
-	if err != nil {
-		return nil, err
-	}
-	ctx := context.Background()
-	repoData, _, err := client.Repositories.Get(ctx, currRepo.Owner(), currRepo.Name())
+func NewRepository(ctx context.Context, client *githubClient, current repository.Repository) (*Repository, error) {
+	repoData, _, err := client.Repositories.Get(ctx, current.Owner(), current.Name())
 	if err != nil {
 		return nil, err
 	}
 	return &Repository{
 		ctx:           ctx,
-		owner:         currRepo.Owner(),
-		name:          currRepo.Name(),
+		owner:         current.Owner(),
+		name:          current.Name(),
 		defaultBranch: repoData.GetDefaultBranch(),
 		client:        client,
 	}, nil
