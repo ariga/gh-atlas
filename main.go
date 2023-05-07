@@ -63,10 +63,11 @@ func (i *InitCiCmd) Run(client *githubClient, current repository.Repository) err
 		branchName = "atlas-ci-" + randSeq(6)
 		secretName = "ATLAS_CLOUD_TOKEN"
 	)
-	repo, err := NewRepository(context.Background(), client, current)
+	repoData, _, err := client.Repositories.Get(context.Background(), current.Owner(), current.Name())
 	if err != nil {
 		return err
 	}
+	repo := NewRepository(client, current, repoData.GetDefaultBranch())
 	if err = repo.SetSecret(secretName, i.Token); err != nil {
 		return err
 	}

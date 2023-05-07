@@ -52,18 +52,14 @@ type Repository struct {
 }
 
 // NewRepository creates a new repository object.
-func NewRepository(ctx context.Context, client *githubClient, current repository.Repository) (*Repository, error) {
-	repoData, _, err := client.Repositories.Get(ctx, current.Owner(), current.Name())
-	if err != nil {
-		return nil, err
-	}
+func NewRepository(client *githubClient, current repository.Repository, defaultBranch string) *Repository {
 	return &Repository{
-		ctx:           ctx,
+		ctx:           context.Background(),
 		owner:         current.Owner(),
 		name:          current.Name(),
-		defaultBranch: repoData.GetDefaultBranch(),
+		defaultBranch: defaultBranch,
 		client:        client,
-	}, nil
+	}
 }
 
 // CheckoutNewBranch creates a new branch on top of the default branch.
