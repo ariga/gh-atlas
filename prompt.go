@@ -1,32 +1,36 @@
 package main
 
-import "github.com/manifoldco/promptui"
+import (
+	"github.com/manifoldco/promptui"
+)
 
 // setParams sets the parameters for the init-ci command.
-func setParams(cmd *InitCiCmd, dirs []string) error {
+func (i *InitCiCmd) setParams(dirs []string) error {
 	var err error
-	// if dir path is not defined we need to ask for the path and the driver
-	if cmd.DirPath == "" {
+	if i.DirPath == "" {
 		prompt := promptui.Select{
 			Label: "choose migration directory",
 			Items: dirs,
+			Stdin: i.stdin,
 		}
-		if _, cmd.DirPath, err = prompt.Run(); err != nil {
+		if _, i.DirPath, err = prompt.Run(); err != nil {
 			return err
 		}
 		prompt = promptui.Select{
 			Label: "choose driver",
 			Items: []string{"mysql", "postgres", "mariadb", "sqlite"},
+			Stdin: i.stdin,
 		}
-		if _, cmd.Driver, err = prompt.Run(); err != nil {
+		if _, i.Driver, err = prompt.Run(); err != nil {
 			return err
 		}
 	}
-	if cmd.Token == "" {
+	if i.Token == "" {
 		prompt := promptui.Prompt{
 			Label: "enter Atlas Cloud token",
+			Stdin: i.stdin,
 		}
-		if cmd.Token, err = prompt.Run(); err != nil {
+		if i.Token, err = prompt.Run(); err != nil {
 			return err
 		}
 	}

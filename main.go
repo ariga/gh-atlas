@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 
@@ -43,14 +44,17 @@ var cli struct {
 
 // InitCiCmd is the command for initializing a new Atlas CI workflow.
 type InitCiCmd struct {
-	DirPath string `arg:"" type:"-path" help:"Path inside repository containing the migration files."`
-	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory."`
-	Token   string `required:"" short:"t" help:"(Required) Atlas authentication token."`
+	DirPath string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
+	Driver  string        `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
+	Token   string        `short:"t" help:"Atlas authentication token."`
+	stdin   io.ReadCloser `hidden:""`
 }
 
 func (i *InitCiCmd) Help() string {
-	return `Example:
-	  gh atlas init-ci --driver="mysql" --token=$ATLAS_CLOUD_TOKEN "dir/migrations"`
+	return `Examples:
+	gh atlas init-ci
+	gh atlas init-ci --token=$ATLAS_CLOUD_TOKEN
+	gh atlas init-ci --token=$ATLAS_CLOUD_TOKEN --driver="mysql" "dir/migrations"`
 }
 
 const (
@@ -76,7 +80,7 @@ func (i *InitCiCmd) Run(client *githubClient, current repository.Repository) err
 	if len(dirs) == 0 {
 		return errors.New("no migration directories found in the repository")
 	}
-	if err = setParams(i, dirs); err != nil {
+	if err = i.setParams(dirs); err != nil {
 		return err
 	}
 	if err = repo.SetSecret(secretName, i.Token); err != nil {
