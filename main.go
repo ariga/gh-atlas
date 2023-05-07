@@ -8,6 +8,7 @@ import (
 	"ariga.io/gh-atlas/gen"
 	"github.com/alecthomas/kong"
 	"github.com/cli/go-gh"
+	"github.com/cli/go-gh/pkg/repository"
 	"github.com/google/go-github/v49/github"
 	"github.com/pkg/browser"
 )
@@ -38,6 +39,7 @@ type InitCiCmd struct {
 	DirPath string `arg:"" type:"-path" help:"Path inside repository containing the migration files."`
 	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory."`
 	Token   string `required:"" short:"t" help:"(Required) Atlas authentication token."`
+	Repo    string `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
 }
 
 func (i *InitCiCmd) Help() string {
@@ -56,7 +58,17 @@ func (i *InitCiCmd) Run(client *githubClient) error {
 		branchName = "atlas-ci-" + randSeq(6)
 		secretName = "ATLAS_CLOUD_TOKEN"
 	)
-	repo, err := NewRepository(client)
+	currRepo, err := gh.CurrentRepository()
+	if err != nil {
+		return err
+	}
+	if i.Repo != "" {
+		currRepo, err = repository.Parse(i.Repo)
+		if err != nil {
+			return err
+		}
+	}
+	repo, err := NewRepository(client, currRepo)
 	if err != nil {
 		return err
 	}
