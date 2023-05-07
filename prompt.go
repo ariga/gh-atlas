@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/manifoldco/promptui"
-)
+import "github.com/manifoldco/promptui"
 
 // setParams sets the parameters for the init-ci command.
 func (i *InitCiCmd) setParams(dirs []string) error {
