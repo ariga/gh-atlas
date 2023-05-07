@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
 	"math/rand"
 
 	"ariga.io/gh-atlas/gen"
 	"github.com/alecthomas/kong"
 	"github.com/cli/go-gh"
+	"github.com/cli/go-gh/pkg/repository"
 	"github.com/google/go-github/v49/github"
 	"github.com/pkg/browser"
 )
@@ -17,13 +19,18 @@ func main() {
 		log.Fatal(err)
 	}
 	client := github.NewClient(c)
-	ctx := kong.Parse(&cli)
-	err = ctx.Run(&githubClient{
+	ghClient := &githubClient{
 		Git:          client.Git,
 		Repositories: client.Repositories,
 		Actions:      client.Actions,
 		PullRequests: client.PullRequests,
-	})
+	}
+	currRepo, err := gh.CurrentRepository()
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx := kong.Parse(&cli, kong.BindTo(currRepo, (*repository.Repository)(nil)))
+	err = ctx.Run(ghClient, currRepo)
 	ctx.FatalIfErrorf(err)
 }
 
@@ -50,15 +57,16 @@ const (
 )
 
 // Run the init-ci command.
-func (i *InitCiCmd) Run(client *githubClient) error {
+func (i *InitCiCmd) Run(client *githubClient, current repository.Repository) error {
 	var (
 		branchName = "atlas-ci-" + randSeq(6)
 		secretName = "ATLAS_CLOUD_TOKEN"
 	)
-	repo, err := NewRepository(client)
+	repoData, _, err := client.Repositories.Get(context.Background(), current.Owner(), current.Name())
 	if err != nil {
 		return err
 	}
+	repo := NewRepository(client, current, repoData.GetDefaultBranch())
 	if err = repo.SetSecret(secretName, i.Token); err != nil {
 		return err
 	}
