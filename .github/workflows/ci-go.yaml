@@ -58,7 +58,7 @@ jobs:
           sudo apt install gh -y
       - name: validate pull request is not created yet
         run: |
-          PULL_REQUESTS=$(gh pr list -R "ronenlu/test_migration" --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length)
+          PULL_REQUESTS=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length)
           if [ $PULL_REQUESTS -ne 0 ]; then
               echo "Pull request already created"
               exit 1
@@ -71,17 +71,22 @@ jobs:
           gh extension install .
       - name: run GitHub atlas extension
         run: |
-          gh atlas init-ci -R "ronenlu/test_migration" --token=${{ secrets.TEST_ATLAS_TOKEN }} --driver="sqlite" "sqlite_dir"
+          gh atlas init-ci -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --driver="sqlite" "sqlite_dir"
       - name: validate pull request is created
         uses: nick-fields/retry@v2
         with:
           timeout_seconds: 20
           retry_wait_seconds: 5
           max_attempts: 4
-          command: PULL_REQUESTS=$(gh pr list -R "ronenlu/test_migration" --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length) && [ $PULL_REQUESTS -eq 1 ]
+          command: PULL_REQUESTS=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length) && [ $PULL_REQUESTS -eq 1 ]
       - name: cleanup the created pr, branch and secret
         if: always()
-        run: |
-          BRANCH=$(gh pr list -R "ronenlu/test_migration" --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq -r '.[0].headRefName')
-          gh pr close $BRANCH -d
-          gh secret delete ATLAS_CLOUD_TOKEN
+        uses: nick-fields/retry@v2
+        with:
+          timeout_seconds: 20
+          retry_wait_seconds: 5
+          max_attempts: 4
+          command: |
+            BRANCH=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq -r '.[0].headRefName')
+            gh pr close -R ${{ secrets.TEST_REPO }} $BRANCH -d
+            gh secret delete -R ${{ secrets.TEST_REPO }} ATLAS_CLOUD_TOKEN
