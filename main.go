@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 
@@ -78,7 +79,10 @@ func (i *InitCiCmd) Run(client *githubClient) error {
 	if err != nil {
 		return err
 	}
-	return browser.OpenURL(link)
+	if err = browser.OpenURL(link); err != nil {
+		fmt.Printf("Failed to open %s in browser: %v\n", link, err)
+	}
+	return nil
 }
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
