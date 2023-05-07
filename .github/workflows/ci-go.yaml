@@ -81,12 +81,7 @@ jobs:
           command: PULL_REQUESTS=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length) && [ $PULL_REQUESTS -eq 1 ]
       - name: cleanup the created pr, branch and secret
         if: always()
-        uses: nick-fields/retry@v2
-        with:
-          timeout_seconds: 20
-          retry_wait_seconds: 5
-          max_attempts: 4
-          command: |
-            BRANCH=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq -r '.[0].headRefName')
-            gh pr close -R ${{ secrets.TEST_REPO }} $BRANCH -d
-            gh secret delete -R ${{ secrets.TEST_REPO }} ATLAS_CLOUD_TOKEN
+        run: |
+          BRANCH=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq -r '.[0].headRefName')
+          gh pr close -R ${{ secrets.TEST_REPO }} $BRANCH -d
+          gh secret delete -R ${{ secrets.TEST_REPO }} ATLAS_CLOUD_TOKEN

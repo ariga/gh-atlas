@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -19,13 +20,18 @@ func main() {
 		log.Fatal(err)
 	}
 	client := github.NewClient(c)
-	ctx := kong.Parse(&cli)
-	err = ctx.Run(&githubClient{
+	ghClient := &githubClient{
 		Git:          client.Git,
 		Repositories: client.Repositories,
 		Actions:      client.Actions,
 		PullRequests: client.PullRequests,
-	})
+	}
+	currRepo, err := gh.CurrentRepository()
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx := kong.Parse(&cli, kong.BindTo(currRepo, (*repository.Repository)(nil)))
+	err = ctx.Run(ghClient, currRepo)
 	ctx.FatalIfErrorf(err)
 }
 
@@ -53,25 +59,23 @@ const (
 )
 
 // Run the init-ci command.
-func (i *InitCiCmd) Run(client *githubClient) error {
+func (i *InitCiCmd) Run(client *githubClient, current repository.Repository) error {
 	var (
+		err        error
 		branchName = "atlas-ci-" + randSeq(6)
 		secretName = "ATLAS_CLOUD_TOKEN"
 	)
-	currRepo, err := gh.CurrentRepository()
-	if err != nil {
-		return err
-	}
 	if i.Repo != "" {
-		currRepo, err = repository.Parse(i.Repo)
+		current, err = repository.Parse(i.Repo)
 		if err != nil {
 			return err
 		}
 	}
-	repo, err := NewRepository(client, currRepo)
+	repoData, _, err := client.Repositories.Get(context.Background(), current.Owner(), current.Name())
 	if err != nil {
 		return err
 	}
+	repo := NewRepository(client, current, repoData.GetDefaultBranch())
 	if err = repo.SetSecret(secretName, i.Token); err != nil {
 		return err
 	}
