@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -68,6 +69,16 @@ func (i *InitCiCmd) Run(client *githubClient, current repository.Repository) err
 		return err
 	}
 	repo := NewRepository(client, current, repoData.GetDefaultBranch())
+	dirs, err := repo.MigrationDirectories()
+	if err != nil {
+		return err
+	}
+	if len(dirs) == 0 {
+		return errors.New("no migration directories found in the repository")
+	}
+	if err = setParams(i, dirs); err != nil {
+		return err
+	}
 	if err = repo.SetSecret(secretName, i.Token); err != nil {
 		return err
 	}
