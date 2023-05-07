@@ -47,6 +47,9 @@ func (m *mockService) GetRepoPublicKey(context.Context, string, string) (*github
 func (m *mockService) Create(context.Context, string, string, *github.NewPullRequest) (*github.PullRequest, *github.Response, error) {
 	return nil, nil, nil
 }
+func (m *mockService) GetTree(context.Context, string, string, string, bool) (*github.Tree, *github.Response, error) {
+	return nil, nil, nil
+}
 
 func TestRunInitCICmd(t *testing.T) {
 	client := &githubClient{
@@ -62,6 +65,6 @@ func TestRunInitCICmd(t *testing.T) {
 	}
 	repo, err := repository.Parse("owner/repo")
 	require.NoError(t, err)
-	err = cmd.Run(client, repo)
+	err = cmd.Run(context.Background(), client, repo)
 	require.NoError(t, err)
 }

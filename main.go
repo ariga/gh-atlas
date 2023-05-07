@@ -30,7 +30,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ctx := kong.Parse(&cli, kong.BindTo(currRepo, (*repository.Repository)(nil)))
+	opts := []kong.Option{
+		kong.BindTo(context.Background(), (*context.Context)(nil)),
+		kong.BindTo(currRepo, (*repository.Repository)(nil)),
+	}
+	ctx := kong.Parse(&cli, opts...)
 	err = ctx.Run(context.Background(), ghClient, currRepo)
 	ctx.FatalIfErrorf(err)
 }
