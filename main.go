@@ -31,7 +31,7 @@ func main() {
 		log.Fatal(err)
 	}
 	ctx := kong.Parse(&cli, kong.BindTo(currRepo, (*repository.Repository)(nil)))
-	err = ctx.Run(ghClient, currRepo)
+	err = ctx.Run(context.Background(), ghClient, currRepo)
 	ctx.FatalIfErrorf(err)
 }
 
@@ -45,6 +45,7 @@ type InitCiCmd struct {
 	DirPath string `arg:"" type:"-path" help:"Path inside repository containing the migration files."`
 	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory."`
 	Token   string `required:"" short:"t" help:"(Required) Atlas authentication token."`
+	Repo    string `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
 }
 
 func (i *InitCiCmd) Help() string {
@@ -58,16 +59,23 @@ const (
 )
 
 // Run the init-ci command.
-func (i *InitCiCmd) Run(client *githubClient, current repository.Repository) error {
+func (i *InitCiCmd) Run(ctx context.Context, client *githubClient, current repository.Repository) error {
 	var (
+		err        error
 		branchName = "atlas-ci-" + randSeq(6)
 		secretName = "ATLAS_CLOUD_TOKEN"
 	)
-	repoData, _, err := client.Repositories.Get(context.Background(), current.Owner(), current.Name())
+	if i.Repo != "" {
+		current, err = repository.Parse(i.Repo)
+		if err != nil {
+			return err
+		}
+	}
+	repoData, _, err := client.Repositories.Get(ctx, current.Owner(), current.Name())
 	if err != nil {
 		return err
 	}
-	repo := NewRepository(client, current, repoData.GetDefaultBranch())
+	repo := NewRepository(ctx, client, current, repoData.GetDefaultBranch())
 	if err = repo.SetSecret(secretName, i.Token); err != nil {
 		return err
 	}

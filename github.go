@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
+	"strings"
 
 	"ariga.io/gh-atlas/gen"
 	"github.com/cli/go-gh/pkg/repository"
@@ -18,6 +20,7 @@ type (
 	gitService interface {
 		GetRef(ctx context.Context, owner string, repo string, ref string) (*github.Reference, *github.Response, error)
 		CreateRef(ctx context.Context, owner string, repo string, ref *github.Reference) (*github.Reference, *github.Response, error)
+		GetTree(ctx context.Context, owner string, repo string, sha string, recursive bool) (*github.Tree, *github.Response, error)
 	}
 	// repositoriesService handles communication with the repository related methods of the GitHub API.
 	repositoriesService interface {
@@ -52,9 +55,9 @@ type Repository struct {
 }
 
 // NewRepository creates a new repository object.
-func NewRepository(client *githubClient, current repository.Repository, defaultBranch string) *Repository {
+func NewRepository(ctx context.Context, client *githubClient, current repository.Repository, defaultBranch string) *Repository {
 	return &Repository{
-		ctx:           context.Background(),
+		ctx:           ctx,
 		owner:         current.Owner(),
 		name:          current.Name(),
 		defaultBranch: defaultBranch,
@@ -143,4 +146,19 @@ func (r *Repository) CreatePR(title string, branchName string) (string, error) {
 		return "", err
 	}
 	return pr.GetHTMLURL(), nil
+}
+
+// MigrationDirectories returns a list of paths to directories containing migration files.
+func (r *Repository) MigrationDirectories() ([]string, error) {
+	t, _, err := r.client.Git.GetTree(r.ctx, r.owner, r.name, r.defaultBranch, true)
+	if err != nil {
+		return nil, err
+	}
+	var paths []string
+	for _, e := range t.Entries {
+		if e.GetType() == "blob" && strings.HasSuffix(e.GetPath(), "atlas.sum") {
+			paths = append(paths, path.Dir(e.GetPath()))
+		}
+	}
+	return paths, nil
 }
