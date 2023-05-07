@@ -45,6 +45,7 @@ type InitCiCmd struct {
 	DirPath string `arg:"" type:"-path" help:"Path inside repository containing the migration files."`
 	Driver  string `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory."`
 	Token   string `required:"" short:"t" help:"(Required) Atlas authentication token."`
+	Repo    string `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
 }
 
 func (i *InitCiCmd) Help() string {
@@ -60,9 +61,16 @@ const (
 // Run the init-ci command.
 func (i *InitCiCmd) Run(client *githubClient, current repository.Repository) error {
 	var (
+		err        error
 		branchName = "atlas-ci-" + randSeq(6)
 		secretName = "ATLAS_CLOUD_TOKEN"
 	)
+	if i.Repo != "" {
+		current, err = repository.Parse(i.Repo)
+		if err != nil {
+			return err
+		}
+	}
 	repoData, _, err := client.Repositories.Get(context.Background(), current.Owner(), current.Name())
 	if err != nil {
 		return err
