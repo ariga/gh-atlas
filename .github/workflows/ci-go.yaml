@@ -80,6 +80,7 @@ jobs:
           max_attempts: 4
           command: PULL_REQUESTS=$(gh pr list --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length) && [ $PULL_REQUESTS -eq 1 ]
       - name: cleanup the created pr, branch and secret
+        if: always()
         run: |
           BRANCH=$(gh pr list --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq -r '.[0].headRefName')
           gh pr close $BRANCH -d
