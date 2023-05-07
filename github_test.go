@@ -23,8 +23,8 @@ func TestGitHubMigrationDirectories(t *testing.T) {
 	}
 	currRepo, err := repository.Parse("rotemtam/atlas-demo")
 	require.NoError(t, err)
-	repo := NewRepository(context.Background(), ghClient, currRepo, "main")
-	dirs, err := repo.MigrationDirectories()
+	repo := NewRepository(ghClient, currRepo, "main")
+	dirs, err := repo.MigrationDirectories(context.Background())
 	require.NoError(t, err)
 	require.Len(t, dirs, 2)
 }

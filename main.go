@@ -79,11 +79,11 @@ func (i *InitCiCmd) Run(ctx context.Context, client *githubClient, current repos
 	if err != nil {
 		return err
 	}
-	repo := NewRepository(ctx, client, current, repoData.GetDefaultBranch())
-	if err = repo.SetSecret(secretName, i.Token); err != nil {
+	repo := NewRepository(client, current, repoData.GetDefaultBranch())
+	if err = repo.SetSecret(ctx, secretName, i.Token); err != nil {
 		return err
 	}
-	if err = repo.CheckoutNewBranch(branchName); err != nil {
+	if err = repo.CheckoutNewBranch(ctx, branchName); err != nil {
 		return err
 	}
 	cfg := &gen.Config{
@@ -92,10 +92,10 @@ func (i *InitCiCmd) Run(ctx context.Context, client *githubClient, current repos
 		SecretName:    secretName,
 		DefaultBranch: repo.defaultBranch,
 	}
-	if err = repo.AddAtlasYAML(cfg, branchName, commitMsg); err != nil {
+	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg); err != nil {
 		return err
 	}
-	link, err := repo.CreatePR(prTitle, branchName)
+	link, err := repo.CreatePR(ctx, prTitle, branchName)
 	if err != nil {
 		return err
 	}
