@@ -26,17 +26,6 @@ func (m *mockService) GetRef(context.Context, string, string, string) (*github.R
 func (m *mockService) CreateRef(context.Context, string, string, *github.Reference) (*github.Reference, *github.Response, error) {
 	return nil, nil, nil
 }
-func (m *mockService) GetTree(context.Context, string, string, string, bool) (*github.Tree, *github.Response, error) {
-	tree := &github.Tree{
-		Entries: []*github.TreeEntry{
-			{
-				Path: github.String("migrations/atlas.sum"),
-				Type: github.String("blob"),
-			},
-		},
-	}
-	return tree, nil, nil
-}
 func (m *mockService) Get(context.Context, string, string) (*github.Repository, *github.Response, error) {
 	return nil, nil, nil
 }
@@ -59,6 +48,17 @@ func (m *mockService) GetRepoPublicKey(context.Context, string, string) (*github
 }
 func (m *mockService) Create(context.Context, string, string, *github.NewPullRequest) (*github.PullRequest, *github.Response, error) {
 	return nil, nil, nil
+}
+func (m *mockService) GetTree(context.Context, string, string, string, bool) (*github.Tree, *github.Response, error) {
+	tree := &github.Tree{
+		Entries: []*github.TreeEntry{
+			{
+				Path: github.String("migrations/atlas.sum"),
+				Type: github.String("blob"),
+			},
+		},
+	}
+	return tree, nil, nil
 }
 
 type stdinBuffer struct {
@@ -142,7 +142,7 @@ func TestRunInitCICmd(t *testing.T) {
 				_, err = w.WriteString(tt.prompt)
 				require.NoError(t, err)
 				tt.cmd.stdin = &stdinBuffer{r}
-				err = tt.cmd.Run(client, repo)
+				err = tt.cmd.Run(context.Background(), client, repo)
 				require.NoError(t, err)
 				require.Equal(t, tt.expected.Token, tt.cmd.Token)
 				require.Equal(t, tt.expected.Driver, tt.cmd.Driver)

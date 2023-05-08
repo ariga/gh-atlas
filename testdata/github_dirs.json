@@ -1,0 +1,145 @@
+{
+  "Initial": null,
+  "Version": "0.2",
+  "Converter": {
+    "ScrubBody": null,
+    "ClearHeaders": [
+      "^X-Goog-.*Encryption-Key$"
+    ],
+    "RemoveRequestHeaders": [
+      "^Authorization$",
+      "^Proxy-Authorization$",
+      "^Connection$",
+      "^Content-Type$",
+      "^Date$",
+      "^Host$",
+      "^Transfer-Encoding$",
+      "^Via$",
+      "^X-Forwarded-.*$",
+      "^X-Cloud-Trace-Context$",
+      "^X-Goog-Api-Client$",
+      "^X-Google-.*$",
+      "^X-Gfe-.*$"
+    ],
+    "RemoveResponseHeaders": [
+      "^X-Google-.*$",
+      "^X-Gfe-.*$"
+    ],
+    "ClearParams": null,
+    "RemoveParams": null
+  },
+  "Entries": [
+    {
+      "ID": "ed872c0de268cb76",
+      "Request": {
+        "Method": "GET",
+        "URL": "https://api.github.com/repos/rotemtam/atlas-demo/git/trees/main?recursive=1",
+        "Header": {
+          "Accept": [
+            "application/vnd.github.v3+json"
+          ],
+          "Accept-Encoding": [
+            "gzip"
+          ],
+          "User-Agent": [
+            "go-github/v49.1.0"
+          ],
+          "X-Github-Api-Version": [
+            "2022-11-28"
+          ]
+        },
+        "MediaType": "",
+        "BodyParts": [
+          ""
+        ]
+      },
+      "Response": {
+        "StatusCode": 200,
+        "Proto": "HTTP/1.1",
+        "ProtoMajor": 1,
+        "ProtoMinor": 1,
+        "Header": {
+          "Accept-Ranges": [
+            "bytes"
+          ],
+          "Access-Control-Allow-Origin": [
+            "*"
+          ],
+          "Access-Control-Expose-Headers": [
+            "ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset"
+          ],
+          "Cache-Control": [
+            "public, max-age=60, s-maxage=60"
+          ],
+          "Content-Encoding": [
+            "gzip"
+          ],
+          "Content-Length": [
+            "958"
+          ],
+          "Content-Security-Policy": [
+            "default-src 'none'"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Date": [
+            "Sun, 07 May 2023 12:28:22 GMT"
+          ],
+          "Etag": [
+            "W/\"5392e61accba4905d355aba9fa2399fc035ad511d5ebe49d5ae574c7e07e3c3e\""
+          ],
+          "Last-Modified": [
+            "Sun, 29 Jan 2023 11:40:04 GMT"
+          ],
+          "Referrer-Policy": [
+            "origin-when-cross-origin, strict-origin-when-cross-origin"
+          ],
+          "Server": [
+            "GitHub.com"
+          ],
+          "Strict-Transport-Security": [
+            "max-age=31536000; includeSubdomains; preload"
+          ],
+          "Vary": [
+            "Accept, Accept-Encoding, Accept, X-Requested-With"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-Frame-Options": [
+            "deny"
+          ],
+          "X-Github-Api-Version-Selected": [
+            "2022-11-28"
+          ],
+          "X-Github-Media-Type": [
+            "github.v3; format=json"
+          ],
+          "X-Github-Request-Id": [
+            "C7D4:F087:47687A5:483E553:64579966"
+          ],
+          "X-Ratelimit-Limit": [
+            "60"
+          ],
+          "X-Ratelimit-Remaining": [
+            "54"
+          ],
+          "X-Ratelimit-Reset": [
+            "1683462749"
+          ],
+          "X-Ratelimit-Resource": [
+            "core"
+          ],
+          "X-Ratelimit-Used": [
+            "6"
+          ],
+          "X-Xss-Protection": [
+            "0"
+          ]
+        },
+        "Body": "H4sIAAAAAAAAA62X627jRgyF38W/05jk3PMqRWFwhpzEqB17ZQWLdJF3L5V146AI1nIr+ZdgC8efDi9nfqxOT7x6WHVWTrX5VLNvNXMl0BJiYXEt1YBBBRSKrO5WL8POHngax+PpYb3m4/b+cTs+vdT7dtivBz0eTuvhMOp+5P2axx2ffhPdH9b2o/U4qJ7WN2hND6wefv+xOvL4ZKpnKfsX+4PYNyvwYJfdj6/H6f79gbszVOqUfWRGaOh8yZDR5xagqeuggoQecky8BNRsrbe7f9Osvx+GP/vu8P00kwuIwKXAIJB7dOA5IpeSfQpdpUAU+zIJLsE1W+tXXOc6aNv7V97vLpQIEL2/uFd3h/rhXpciPkfKORhmRiYsST1mnjyTHBWxcGzTA9u/zHxzM/yv8pzkrTzn6n4ifq/z+6c2ly2w/fWMgVUydpDCiRKiePATWk0ug3N5ejU/2aJbgGy26iey/fZx4HF7eJ5bnOaKE5QsPfVGwWZI6zkCBSAHXIJ9FCTREsU5W+tLoDVZcSNCgWT95Dfb5+14f/o220MSjcU3xWYTjTCrSxjVyocLMxXPbO3o+6U+KS1h4lzZK8w5OA8bFtlY2T/a1B5PN8AT1yjkis1RrVSDR5czu9xSCBxC9d3ZtnDTvjg3ZywLwM+WvQJfADFvRn68hRmjZF8LAEerG1+9p268hXLFFAli16Y+XJqW0hLzaLbsNWa0BfFu+GT25vSy3/PweoPnHjUUw881Okz2BnyC5BqQx1RISuipaaH44XlYAn+26jV8svnzjm85Za/PN5U7QmUNtaWepVmS8HaFzt2unFuWKi2V9mlek1+i12fLXmXPnv5xfDPot5ftoHKD9WBsKRZXMZROqcYiNuYTUbTh7sQSFjdl/Tzr4gLtPlv2Gr+LSBsZDsf/Yn4XW14qjhL77FLV1orafvPNRr0FSMdkaaxd4N0S7LNVv2b/mUisya0bz1n5l2lLKYaqFNg7xBgz2XwrIdsOr0DQpEeL/2CZ+yORAC3g8GzZT5TT+HocdG4gKeiNKpBtKBvWIq3b+caSV+7dzjRJQk29VpeXCCSztb7AWd8ctYKtnRbs4GYjyDWJblprKsF7QFHLINhsKcWwBNlsrV+TTZnLgYNpgwKUG0ZQiuZhteNod8kOPh3tJGeMksQHLORs87pSy2X7er9Afc5WvYJ9azuG0AyrTxGqhEZdLXMEl7gVVM0OWlIt/b1oz/kKl1i2s2Xf/rAj9/Dy3HhUWT103p307W/F271PTRAAAA=="
+      }
+    }
+  ]
+}
