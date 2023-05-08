@@ -47,7 +47,6 @@ type (
 )
 
 type Repository struct {
-	ctx           context.Context
 	owner         string
 	name          string
 	defaultBranch string
@@ -57,7 +56,6 @@ type Repository struct {
 // NewRepository creates a new repository object.
 func NewRepository(client *githubClient, current repository.Repository, defaultBranch string) *Repository {
 	return &Repository{
-		ctx:           context.Background(),
 		owner:         current.Owner(),
 		name:          current.Name(),
 		defaultBranch: defaultBranch,
@@ -66,8 +64,8 @@ func NewRepository(client *githubClient, current repository.Repository, defaultB
 }
 
 // CheckoutNewBranch creates a new branch on top of the default branch.
-func (r *Repository) CheckoutNewBranch(branchName string) error {
-	defaultBranch, _, err := r.client.Git.GetRef(r.ctx, r.owner, r.name, "refs/heads/"+r.defaultBranch)
+func (r *Repository) CheckoutNewBranch(ctx context.Context, branchName string) error {
+	defaultBranch, _, err := r.client.Git.GetRef(ctx, r.owner, r.name, "refs/heads/"+r.defaultBranch)
 	if err != nil {
 		return err
 	}
@@ -77,14 +75,14 @@ func (r *Repository) CheckoutNewBranch(branchName string) error {
 			SHA: defaultBranch.Object.SHA,
 		},
 	}
-	_, _, err = r.client.Git.CreateRef(r.ctx, r.owner, r.name, newBranch)
+	_, _, err = r.client.Git.CreateRef(ctx, r.owner, r.name, newBranch)
 	return err
 }
 
 // SetSecret sets Secret for the repository with the given name and value.
 // if the secret already exists, it will not be updated.
-func (r *Repository) SetSecret(name, value string) error {
-	_, res, err := r.client.Actions.GetRepoSecret(r.ctx, r.owner, r.name, name)
+func (r *Repository) SetSecret(ctx context.Context, name, value string) error {
+	_, res, err := r.client.Actions.GetRepoSecret(ctx, r.owner, r.name, name)
 	if err != nil && res.StatusCode != http.StatusNotFound {
 		return err
 	}
@@ -92,7 +90,7 @@ func (r *Repository) SetSecret(name, value string) error {
 		fmt.Printf("secret %q already exists\n", name)
 		return nil
 	}
-	key, _, err := r.client.Actions.GetRepoPublicKey(r.ctx, r.owner, r.name)
+	key, _, err := r.client.Actions.GetRepoPublicKey(ctx, r.owner, r.name)
 	if err != nil {
 		return err
 	}
@@ -112,7 +110,7 @@ func (r *Repository) SetSecret(name, value string) error {
 		KeyID:          key.GetKeyID(),
 		EncryptedValue: base64.StdEncoding.EncodeToString(encrypted),
 	}
-	res, err = r.client.Actions.CreateOrUpdateRepoSecret(r.ctx, r.owner, r.name, secret)
+	res, err = r.client.Actions.CreateOrUpdateRepoSecret(ctx, r.owner, r.name, secret)
 	if res.StatusCode == http.StatusForbidden {
 		return errors.New("forbidden: make sure you have access to set secrets for this repository")
 	}
@@ -120,7 +118,7 @@ func (r *Repository) SetSecret(name, value string) error {
 }
 
 // AddAtlasYAML create commit with atlas ci yaml file on the branch.
-func (r *Repository) AddAtlasYAML(cfg *gen.Config, branchName, commitMsg string) error {
+func (r *Repository) AddAtlasYAML(ctx context.Context, cfg *gen.Config, branchName, commitMsg string) error {
 	content, err := gen.Generate(cfg)
 	if err != nil {
 		return err
@@ -130,18 +128,18 @@ func (r *Repository) AddAtlasYAML(cfg *gen.Config, branchName, commitMsg string)
 		Content: content,
 		Branch:  github.String(branchName),
 	}
-	_, _, err = r.client.Repositories.CreateFile(r.ctx, r.owner, r.name, ".github/workflows/ci-atlas.yaml", newFile)
+	_, _, err = r.client.Repositories.CreateFile(ctx, r.owner, r.name, ".github/workflows/ci-atlas.yaml", newFile)
 	return err
 }
 
 // CreatePR creates a pull request for the branch and returns the link to the PR.
-func (r *Repository) CreatePR(title string, branchName string) (string, error) {
+func (r *Repository) CreatePR(ctx context.Context, title string, branchName string) (string, error) {
 	newPR := &github.NewPullRequest{
 		Title: &title,
 		Head:  &branchName,
 		Base:  &r.defaultBranch,
 	}
-	pr, _, err := r.client.PullRequests.Create(r.ctx, r.owner, r.name, newPR)
+	pr, _, err := r.client.PullRequests.Create(ctx, r.owner, r.name, newPR)
 	if err != nil {
 		return "", err
 	}
@@ -149,8 +147,8 @@ func (r *Repository) CreatePR(title string, branchName string) (string, error) {
 }
 
 // MigrationDirectories returns a list of paths to directories containing migration files.
-func (r *Repository) MigrationDirectories() ([]string, error) {
-	t, _, err := r.client.Git.GetTree(r.ctx, r.owner, r.name, r.defaultBranch, true)
+func (r *Repository) MigrationDirectories(ctx context.Context) ([]string, error) {
+	t, _, err := r.client.Git.GetTree(ctx, r.owner, r.name, r.defaultBranch, true)
 	if err != nil {
 		return nil, err
 	}

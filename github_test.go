@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"testing"
 
 	"github.com/cli/go-gh/pkg/repository"
@@ -23,7 +24,7 @@ func TestGitHubMigrationDirectories(t *testing.T) {
 	currRepo, err := repository.Parse("rotemtam/atlas-demo")
 	require.NoError(t, err)
 	repo := NewRepository(ghClient, currRepo, "main")
-	dirs, err := repo.MigrationDirectories()
+	dirs, err := repo.MigrationDirectories(context.Background())
 	require.NoError(t, err)
 	require.Len(t, dirs, 2)
 }

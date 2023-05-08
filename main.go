@@ -30,8 +30,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ctx := kong.Parse(&cli, kong.BindTo(currRepo, (*repository.Repository)(nil)))
-	err = ctx.Run(ghClient, currRepo)
+	opts := []kong.Option{
+		kong.BindTo(context.Background(), (*context.Context)(nil)),
+		kong.BindTo(currRepo, (*repository.Repository)(nil)),
+	}
+	ctx := kong.Parse(&cli, opts...)
+	err = ctx.Run(context.Background(), ghClient, currRepo)
 	ctx.FatalIfErrorf(err)
 }
 
@@ -59,7 +63,7 @@ const (
 )
 
 // Run the init-ci command.
-func (i *InitCiCmd) Run(client *githubClient, current repository.Repository) error {
+func (i *InitCiCmd) Run(ctx context.Context, client *githubClient, current repository.Repository) error {
 	var (
 		err        error
 		branchName = "atlas-ci-" + randSeq(6)
@@ -71,15 +75,15 @@ func (i *InitCiCmd) Run(client *githubClient, current repository.Repository) err
 			return err
 		}
 	}
-	repoData, _, err := client.Repositories.Get(context.Background(), current.Owner(), current.Name())
+	repoData, _, err := client.Repositories.Get(ctx, current.Owner(), current.Name())
 	if err != nil {
 		return err
 	}
 	repo := NewRepository(client, current, repoData.GetDefaultBranch())
-	if err = repo.SetSecret(secretName, i.Token); err != nil {
+	if err = repo.SetSecret(ctx, secretName, i.Token); err != nil {
 		return err
 	}
-	if err = repo.CheckoutNewBranch(branchName); err != nil {
+	if err = repo.CheckoutNewBranch(ctx, branchName); err != nil {
 		return err
 	}
 	cfg := &gen.Config{
@@ -88,10 +92,10 @@ func (i *InitCiCmd) Run(client *githubClient, current repository.Repository) err
 		SecretName:    secretName,
 		DefaultBranch: repo.defaultBranch,
 	}
-	if err = repo.AddAtlasYAML(cfg, branchName, commitMsg); err != nil {
+	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg); err != nil {
 		return err
 	}
-	link, err := repo.CreatePR(prTitle, branchName)
+	link, err := repo.CreatePR(ctx, prTitle, branchName)
 	if err != nil {
 		return err
 	}
