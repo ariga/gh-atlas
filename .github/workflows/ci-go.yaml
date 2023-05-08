@@ -42,10 +42,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Run tests
-        # don't run race detector on TestRunInitCICmd because promtui package is not thread safe
-        run: |
-          go test -race -skip=TestRunInitCICmd ./... 
-          go test -run=TestRunInitCICmd ./...
+        run: go test -race ./...
   integration-test:
     runs-on: ubuntu-latest
     env:
