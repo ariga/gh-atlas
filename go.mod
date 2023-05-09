@@ -3,6 +3,7 @@ module ariga.io/gh-atlas
 go 1.20
 
 require (
+	github.com/1lann/promptui v0.8.1-0.20220708222609-81fad96dd5e1
 	github.com/alecthomas/kong v0.7.1
 	github.com/cli/go-gh v1.2.1
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -15,6 +16,7 @@ require (
 )
 
 require (
+	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/cli/safeexec v1.0.0 // indirect
 	github.com/cli/shurcooL-graphql v0.0.2 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
