@@ -36,7 +36,7 @@ jobs:
         with:
           dir: 'migrations'
           dev-url: "mysql://root:pass@localhost:3306/dev"
-          cloud-token: ${{secrets.ATLAS_CLOUD_TOKEN}}
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
   sync:
     needs: lint
     if: github.ref == 'refs/heads/master'
@@ -47,4 +47,4 @@ jobs:
         with:
           dir: 'migrations'
           driver: mysql
-          cloud-token: ${{secrets.ATLAS_CLOUD_TOKEN}}
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}

@@ -1,0 +1,36 @@
+package main
+
+import "github.com/1lann/promptui"
+
+// setParams sets the parameters for the init-ci command.
+func (i *InitCiCmd) setParams(dirs []string) error {
+	var err error
+	if i.DirPath == "" {
+		prompt := promptui.Select{
+			Label: "choose migration directory",
+			Items: dirs,
+			Stdin: i.stdin,
+		}
+		if _, i.DirPath, err = prompt.Run(); err != nil {
+			return err
+		}
+		prompt = promptui.Select{
+			Label: "choose driver",
+			Items: []string{"mysql", "postgres", "mariadb", "sqlite"},
+			Stdin: i.stdin,
+		}
+		if _, i.Driver, err = prompt.Run(); err != nil {
+			return err
+		}
+	}
+	if i.Token == "" {
+		prompt := promptui.Prompt{
+			Label: "enter Atlas Cloud token",
+			Stdin: i.stdin,
+		}
+		if i.Token, err = prompt.Run(); err != nil {
+			return err
+		}
+	}
+	return nil
+}

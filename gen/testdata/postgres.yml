@@ -36,7 +36,7 @@ jobs:
         with:
           dir: 'migrations'
           dev-url: "postgres://postgres:pass@localhost:5432/dev?sslmode=disable"
-          cloud-token: ${{secrets.ATLAS_CLOUD_TOKEN}}
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
   sync:
     needs: lint
     if: github.ref == 'refs/heads/master'
@@ -47,4 +47,4 @@ jobs:
         with:
           dir: 'migrations'
           driver: postgres
-          cloud-token: ${{secrets.ATLAS_CLOUD_TOKEN}}
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
