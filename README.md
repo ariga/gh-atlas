@@ -19,12 +19,12 @@ gh auth refresh -s write:packages,workflow
 
 create pull request with atlas CI workflow by running
 ```bash
-gh atlas init-ci
+gh atlas init-action
 ```
 
 for more information run
 ```bash
-gh atlas init-ci -h
+gh atlas init-action -h
 ```
    
 ## Development
