@@ -32,7 +32,7 @@ func (i *InitCiCmd) setParams(dirs []string) error {
 		prompt := promptui.Prompt{
 			Label: "enter Atlas Cloud token",
 			Stdin: i.stdin,
-			Mask:  '*',
+			Mask:  ' ',
 			Validate: func(s string) error {
 				if strings.Trim(s, " ") == "" {
 					return errors.New("token cannot be empty")
