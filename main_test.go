@@ -94,6 +94,7 @@ func TestRunInitCICmd(t *testing.T) {
 		cmd      *InitCiCmd // initial command to run
 		prompt   string     // user interaction with the terminal
 		expected *InitCiCmd // expected command after user interaction
+		wantErr  bool       // whether the command should return an error
 	}{
 		{
 			name: "all arg and flags supplied",
@@ -133,6 +134,15 @@ func TestRunInitCICmd(t *testing.T) {
 				Token:   "my token",
 			},
 		},
+		{
+			name: "empty token prompt",
+			cmd: &InitCiCmd{
+				DirPath: "migrations",
+				Driver:  "mysql",
+			},
+			prompt:  " \n",
+			wantErr: true,
+		},
 	}
 	{
 		for _, tt := range tests {
@@ -141,8 +151,15 @@ func TestRunInitCICmd(t *testing.T) {
 				require.NoError(t, err)
 				_, err = w.WriteString(tt.prompt)
 				require.NoError(t, err)
+				err = w.Close()
+				require.NoError(t, err)
 				tt.cmd.stdin = &stdinBuffer{r}
+
 				err = tt.cmd.Run(context.Background(), client, repo)
+				if tt.wantErr {
+					require.Error(t, err)
+					return
+				}
 				require.NoError(t, err)
 				require.Equal(t, tt.expected.Token, tt.cmd.Token)
 				require.Equal(t, tt.expected.Driver, tt.cmd.Driver)
