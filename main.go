@@ -35,6 +35,7 @@ func main() {
 	opts := []kong.Option{
 		kong.BindTo(context.Background(), (*context.Context)(nil)),
 		kong.BindTo(currRepo, (*repository.Repository)(nil)),
+		kong.UsageOnError(),
 	}
 	ctx := kong.Parse(&cli, opts...)
 	err = ctx.Run(context.Background(), ghClient, currRepo)
