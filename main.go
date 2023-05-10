@@ -73,7 +73,7 @@ func (i *InitCiCmd) Run(ctx context.Context, client *githubClient, current repos
 	var (
 		err        error
 		branchName = "atlas-ci-" + randSeq(6)
-		secretName = "ATLAS_CLOUD_TOKEN"
+		secretName = "ATLAS_CLOUD_TOKEN" + randSeq(6)
 	)
 	if i.Repo != "" {
 		current, err = repository.Parse(i.Repo)

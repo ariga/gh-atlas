@@ -35,13 +35,18 @@ func (m *mockService) CreateFile(context.Context, string, string, string, *githu
 func (m *mockService) GetRepoSecret(context.Context, string, string, string) (*github.Secret, *github.Response, error) {
 	res := &github.Response{
 		Response: &http.Response{
-			StatusCode: http.StatusOK,
+			StatusCode: http.StatusNotFound,
 		},
 	}
 	return nil, res, nil
 }
 func (m *mockService) CreateOrUpdateRepoSecret(context.Context, string, string, *github.EncryptedSecret) (*github.Response, error) {
-	return nil, nil
+	res := &github.Response{
+		Response: &http.Response{
+			StatusCode: http.StatusOK,
+		},
+	}
+	return res, nil
 }
 func (m *mockService) GetRepoPublicKey(context.Context, string, string) (*github.PublicKey, *github.Response, error) {
 	return nil, nil, nil
