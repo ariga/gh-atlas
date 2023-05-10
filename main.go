@@ -35,6 +35,7 @@ func main() {
 	opts := []kong.Option{
 		kong.BindTo(context.Background(), (*context.Context)(nil)),
 		kong.BindTo(currRepo, (*repository.Repository)(nil)),
+		kong.UsageOnError(),
 	}
 	ctx := kong.Parse(&cli, opts...)
 	err = ctx.Run(context.Background(), ghClient, currRepo)
@@ -62,16 +63,15 @@ func (i *InitCiCmd) Help() string {
 	gh atlas init-ci --token=$ATLAS_CLOUD_TOKEN --driver="mysql" "dir/migrations"`
 }
 
-const (
-	commitMsg  = ".github/workflows: add atlas ci workflow"
-	secretName = "ATLAS_CLOUD_TOKEN"
-)
+const commitMsg = ".github/workflows: add atlas ci workflow"
 
 // Run the init-ci command.
 func (i *InitCiCmd) Run(ctx context.Context, client *githubClient, current repository.Repository) error {
 	var (
 		err        error
-		branchName = "atlas-ci-" + randSeq(6)
+		randSuffix = randSeq(6)
+		branchName = "atlas-ci-" + randSuffix
+		secretName = "ATLAS_CLOUD_TOKEN_" + randSuffix
 	)
 	if i.Repo != "" {
 		current, err = repository.Parse(i.Repo)

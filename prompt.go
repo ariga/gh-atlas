@@ -1,6 +1,11 @@
 package main
 
-import "github.com/1lann/promptui"
+import (
+	"errors"
+	"strings"
+
+	"github.com/1lann/promptui"
+)
 
 // setParams sets the parameters for the init-ci command.
 func (i *InitCiCmd) setParams(dirs []string) error {
@@ -27,6 +32,13 @@ func (i *InitCiCmd) setParams(dirs []string) error {
 		prompt := promptui.Prompt{
 			Label: "enter Atlas Cloud token",
 			Stdin: i.stdin,
+			Mask:  ' ',
+			Validate: func(s string) error {
+				if strings.Trim(s, " ") == "" {
+					return errors.New("token cannot be empty")
+				}
+				return nil
+			},
 		}
 		if i.Token, err = prompt.Run(); err != nil {
 			return err
