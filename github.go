@@ -87,8 +87,7 @@ func (r *Repository) SetSecret(ctx context.Context, name, value string) error {
 		return err
 	}
 	if res.StatusCode == http.StatusOK {
-		fmt.Printf("secret %q already exists\n", name)
-		return nil
+		return fmt.Errorf("secret %q already exists", name)
 	}
 	key, _, err := r.client.Actions.GetRepoPublicKey(ctx, r.owner, r.name)
 	if err != nil {

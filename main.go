@@ -35,6 +35,7 @@ func main() {
 	opts := []kong.Option{
 		kong.BindTo(context.Background(), (*context.Context)(nil)),
 		kong.BindTo(currRepo, (*repository.Repository)(nil)),
+		kong.UsageOnError(),
 	}
 	ctx := kong.Parse(&cli, opts...)
 	err = ctx.Run(context.Background(), ghClient, currRepo)
@@ -71,8 +72,9 @@ const (
 func (i *InitCiCmd) Run(ctx context.Context, client *githubClient, current repository.Repository) error {
 	var (
 		err        error
-		branchName = "atlas-ci-" + randSeq(6)
-		secretName = "ATLAS_CLOUD_TOKEN"
+		randSuffix = randSeq(6)
+		branchName = "atlas-ci-" + randSuffix
+		secretName = "ATLAS_CLOUD_TOKEN_" + randSuffix
 	)
 	if i.Repo != "" {
 		current, err = repository.Parse(i.Repo)
