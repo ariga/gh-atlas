@@ -55,7 +55,7 @@ jobs:
           gh extension install .
       - name: run GitHub atlas extension
         run: |
-          gh atlas init-ci -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --driver="sqlite" "sqlite_dir"
+          gh atlas init-action -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --driver="sqlite" "sqlite_dir"
       - name: validate pull request is created
         uses: nick-fields/retry@v2
         with:

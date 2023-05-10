@@ -44,11 +44,11 @@ func main() {
 
 // cli is the root command.
 var cli struct {
-	InitCI InitCiCmd `cmd:"" help:"Initialize a new Atlas CI configuration."`
+	InitAction InitActionCmd `cmd:"" help:"Initialize a new Atlas CI Action configuration."`
 }
 
-// InitCiCmd is the command for initializing a new Atlas CI workflow.
-type InitCiCmd struct {
+// InitActionCmd is the command for initializing a new Atlas CI workflow.
+type InitActionCmd struct {
 	DirPath string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
 	Driver  string        `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
 	Token   string        `short:"t" help:"Atlas authentication token."`
@@ -56,11 +56,11 @@ type InitCiCmd struct {
 	stdin   io.ReadCloser `hidden:""`
 }
 
-func (i *InitCiCmd) Help() string {
+func (i *InitActionCmd) Help() string {
 	return `Examples:
-	gh atlas init-ci
-	gh atlas init-ci --token=$ATLAS_CLOUD_TOKEN
-	gh atlas init-ci --token=$ATLAS_CLOUD_TOKEN --driver="mysql" "dir/migrations"`
+	gh atlas init-action
+	gh atlas init-action --token=$ATLAS_CLOUD_TOKEN
+	gh atlas init-action --token=$ATLAS_CLOUD_TOKEN --driver="mysql" "dir/migrations"`
 }
 
 const (
@@ -68,8 +68,8 @@ const (
 	prTitle   = "Add Atlas CI configuration"
 )
 
-// Run the init-ci command.
-func (i *InitCiCmd) Run(ctx context.Context, client *githubClient, current repository.Repository) error {
+// Run the init-action command.
+func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current repository.Repository) error {
 	var (
 		err        error
 		randSuffix = randSeq(6)
