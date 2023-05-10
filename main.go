@@ -63,8 +63,7 @@ func (i *InitCiCmd) Help() string {
 }
 
 const (
-	commitMsg  = "Add Atlas CI configuration yaml to GitHub Workflows"
-	prTitle    = "Add Atlas CI configuration"
+	commitMsg  = ".github/workflows: add atlas ci workflow"
 	secretName = "ATLAS_CLOUD_TOKEN"
 )
 
@@ -110,7 +109,7 @@ func (i *InitCiCmd) Run(ctx context.Context, client *githubClient, current repos
 	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg); err != nil {
 		return err
 	}
-	link, err := repo.CreatePR(ctx, prTitle, branchName)
+	link, err := repo.CreatePR(ctx, commitMsg, branchName)
 	if err != nil {
 		return err
 	}
