@@ -63,10 +63,7 @@ func (i *InitActionCmd) Help() string {
 	gh atlas init-action --token=$ATLAS_CLOUD_TOKEN --driver="mysql" "dir/migrations"`
 }
 
-const (
-	commitMsg = "Add Atlas CI configuration yaml to GitHub Workflows"
-	prTitle   = "Add Atlas CI configuration"
-)
+const commitMsg = ".github/workflows: add atlas ci workflow"
 
 // Run the init-action command.
 func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current repository.Repository) error {
@@ -112,7 +109,7 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg); err != nil {
 		return err
 	}
-	link, err := repo.CreatePR(ctx, prTitle, branchName)
+	link, err := repo.CreatePR(ctx, commitMsg, branchName)
 	if err != nil {
 		return err
 	}

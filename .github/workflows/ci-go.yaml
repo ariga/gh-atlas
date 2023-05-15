@@ -42,7 +42,7 @@ jobs:
           sudo apt install gh -y
       - name: validate pull request is not created yet
         run: |
-          PULL_REQUESTS=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length)
+          PULL_REQUESTS=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'add atlas ci workflow' in:title" --json  headRefName | jq length)
           if [ $PULL_REQUESTS -ne 0 ]; then
               echo "Pull request already created"
               exit 1
@@ -62,11 +62,11 @@ jobs:
           timeout_seconds: 20
           retry_wait_seconds: 5
           max_attempts: 4
-          command: PULL_REQUESTS=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq length) && [ $PULL_REQUESTS -eq 1 ]
+          command: PULL_REQUESTS=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'add atlas ci workflow' in:title" --json  headRefName | jq length) && [ $PULL_REQUESTS -eq 1 ]
       - name: cleanup the created pr, branch and secret
         if: always()
         run: |
-          BRANCH=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'Add Atlas CI configuration' in:title" --json  headRefName | jq -r '.[0].headRefName')
+          BRANCH=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'add atlas ci workflow' in:title" --json  headRefName | jq -r '.[0].headRefName')
           gh pr close -R ${{ secrets.TEST_REPO }} $BRANCH -d
           BRANCH_SUFFIX=${BRANCH: -6}
           SECRET_NAME="ATLAS_CLOUD_TOKEN_$BRANCH_SUFFIX"
