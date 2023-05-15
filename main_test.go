@@ -85,7 +85,7 @@ func (b *stdinBuffer) Read(dst []byte) (int, error) {
 	return n, nil
 }
 
-func TestRunInitCICmd(t *testing.T) {
+func TestRunInitActionCmd(t *testing.T) {
 	client := &githubClient{
 		Git:          &mockService{},
 		Repositories: &mockService{},
@@ -96,19 +96,19 @@ func TestRunInitCICmd(t *testing.T) {
 	require.NoError(t, err)
 	var tests = []struct {
 		name     string
-		cmd      *InitCiCmd // initial command to run
-		prompt   string     // user interaction with the terminal
-		expected *InitCiCmd // expected command after user interaction
-		wantErr  bool       // whether the command should return an error
+		cmd      *InitActionCmd // initial command to run
+		prompt   string         // user interaction with the terminal
+		expected *InitActionCmd // expected command after user interaction
+		wantErr  bool           // whether the command should return an error
 	}{
 		{
 			name: "all arg and flags supplied",
-			cmd: &InitCiCmd{
+			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
 				Token:   "token",
 			},
-			expected: &InitCiCmd{
+			expected: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
 				Token:   "token",
@@ -116,11 +116,11 @@ func TestRunInitCICmd(t *testing.T) {
 		},
 		{
 			name: "no dir path and driver supplied",
-			cmd: &InitCiCmd{
+			cmd: &InitActionCmd{
 				Token: "token",
 			},
 			prompt: "\n\n",
-			expected: &InitCiCmd{
+			expected: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
 				Token:   "token",
@@ -128,12 +128,12 @@ func TestRunInitCICmd(t *testing.T) {
 		},
 		{
 			name: "no token flag supplied",
-			cmd: &InitCiCmd{
+			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
 			},
 			prompt: "my token\n",
-			expected: &InitCiCmd{
+			expected: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
 				Token:   "my token",
@@ -141,7 +141,7 @@ func TestRunInitCICmd(t *testing.T) {
 		},
 		{
 			name: "empty token prompt",
-			cmd: &InitCiCmd{
+			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
 			},

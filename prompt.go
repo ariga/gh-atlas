@@ -7,8 +7,8 @@ import (
 	"github.com/1lann/promptui"
 )
 
-// setParams sets the parameters for the init-ci command.
-func (i *InitCiCmd) setParams(dirs []string) error {
+// setParams sets the parameters for the init-action command.
+func (i *InitActionCmd) setParams(dirs []string) error {
 	var err error
 	if i.DirPath == "" {
 		prompt := promptui.Select{
