@@ -30,7 +30,7 @@ func (i *InitActionCmd) setParams(dirs []string) error {
 	}
 	if i.Token == "" {
 		prompt := promptui.Prompt{
-			Label: "enter Atlas Cloud token",
+			Label: "Enter Atlas Cloud token",
 			Stdin: i.stdin,
 			Mask:  '*',
 			Validate: func(s string) error {
