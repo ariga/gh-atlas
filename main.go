@@ -116,6 +116,7 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	if err != nil {
 		return err
 	}
+	fmt.Println("Created PR:", link)
 	if err = browser.OpenURL(link); err != nil {
 		fmt.Printf("Failed to open %s in browser: %v\n", link, err)
 	}
