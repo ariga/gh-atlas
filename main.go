@@ -123,7 +123,7 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	return nil
 }
 
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+var letters = []rune("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func randSeq(n int) string {
 	b := make([]rune, n)
