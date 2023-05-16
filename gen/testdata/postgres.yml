@@ -35,7 +35,7 @@ jobs:
       - uses: ariga/atlas-action@v0
         with:
           dir: 'migrations'
-          dev-url: "postgres://postgres:pass@localhost:5432/dev?sslmode=disable"
+          dev-url: 'postgres://postgres:pass@localhost:5432/dev?sslmode=disable'
           cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
   sync:
     needs: lint

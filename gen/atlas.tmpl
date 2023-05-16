@@ -70,13 +70,13 @@ jobs:
         with:
           dir: '{{ .Path }}'
           {{- if eq .Driver "mysql" }}
-          dev-url: "mysql://root:pass@localhost:3306/dev"
+          dev-url: 'mysql://root:pass@localhost:3306/dev'
           {{- else if eq .Driver "postgres" }}
-          dev-url: "postgres://postgres:pass@localhost:5432/dev?sslmode=disable"
+          dev-url: 'postgres://postgres:pass@localhost:5432/dev?sslmode=disable'
           {{- else if eq .Driver "mariadb" }}
-          dev-url: "maria://root:pass@localhost:3306/dev"
+          dev-url: 'maria://root:pass@localhost:3306/dev'
           {{- else if eq .Driver "sqlite" }}
-          dev-url: "sqlite://dev?mode=memory"
+          dev-url: 'sqlite://dev?mode=memory'
           {{- end }}
           cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
   sync:

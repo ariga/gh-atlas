@@ -132,10 +132,11 @@ func (r *Repository) AddAtlasYAML(ctx context.Context, cfg *gen.Config, branchNa
 }
 
 // CreatePR creates a pull request for the branch and returns the link to the PR.
-func (r *Repository) CreatePR(ctx context.Context, title string, branchName string) (string, error) {
+func (r *Repository) CreatePR(ctx context.Context, title string, body string, branchName string) (string, error) {
 	newPR := &github.NewPullRequest{
 		Title: &title,
 		Head:  &branchName,
+		Body:  &body,
 		Base:  &r.defaultBranch,
 	}
 	pr, _, err := r.client.PullRequests.Create(ctx, r.owner, r.name, newPR)

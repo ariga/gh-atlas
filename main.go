@@ -63,7 +63,10 @@ func (i *InitActionCmd) Help() string {
 	gh atlas init-action --token=$ATLAS_CLOUD_TOKEN --driver="mysql" "dir/migrations"`
 }
 
-const commitMsg = ".github/workflows: add atlas ci workflow"
+const (
+	commitMsg = ".github/workflows: add atlas ci workflow"
+	prBody    = "PR created by the `gh atlas init-action` command.\n for more information visit https://github.com/ariga/gh-atlas."
+)
 
 // Run the init-action command.
 func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current repository.Repository) error {
@@ -109,17 +112,18 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg); err != nil {
 		return err
 	}
-	link, err := repo.CreatePR(ctx, commitMsg, branchName)
+	link, err := repo.CreatePR(ctx, commitMsg, prBody, branchName)
 	if err != nil {
 		return err
 	}
+	fmt.Println("Created PR:", link)
 	if err = browser.OpenURL(link); err != nil {
 		fmt.Printf("Failed to open %s in browser: %v\n", link, err)
 	}
 	return nil
 }
 
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+var letters = []rune("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func randSeq(n int) string {
 	b := make([]rune, n)
