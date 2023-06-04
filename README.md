@@ -1,42 +1,28 @@
 # gh-atlas
-GitHub CLI extension for managing [Atlas](https://github.com/ariga/atlas) workflows.
 
-## Installation
-Install the `gh` CLI - see the [installation](https://github.com/cli/cli#installation)
+A GitHub CLI extension for managing [Atlas](https://github.com/ariga/atlas) workflows.
 
-Install this extension
+## Getting started
 
-```sh
-gh extension install ariga/gh-atlas
-```
+To quickly set up [Atlas Cloud](https://atlasgo.cloud) CI for your repository, follow these steps:
 
-## Usage
-
-add permissions to add workflow files
-```bash
-gh auth refresh -s write:packages,workflow
-```
-
-create pull request with atlas CI workflow by running
-```bash
-gh atlas init-action
-```
-
-for more information run
-```bash
-gh atlas init-action -h
-```
-   
-## Development
-clone the repo:
-```bash
-git clone https://github.com/ariga/gh-atlas
-```
-add extension locally
-```bash
-cd gh-atlas && gh extension install .
-```
-see changes in your code as you develop
-```bash
-go build && gh atlas
-```
+1. Install the official `gh` CLI:
+  ```sh
+  brew install gh
+  ```
+  For other systems, see the [installation](https://github.com/cli/cli#installation) instructions.
+2. Install this extension:
+  ```sh
+  gh extension install ariga/gh-atlas
+  ```
+3. Setting up Atlas Cloud for your repository requires creating new GitHub Actions workflows.  
+  To do this, you need add the following permissions to your GitHub CLI:
+  ```sh
+  gh auth refresh -s write:packages,workflow
+  ```
+4. Use the `init-action` command to set up Atlas Cloud for your repository:
+  ```sh
+  gh atlas init-action
+  ```
+  This will create a new workflow in your repository, which will run on every push to the your mainline branch.  
+  You can customize the workflow by editing the `.github/workflows/ci-atlas.yml` file.
