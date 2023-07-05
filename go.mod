@@ -15,6 +15,8 @@ require (
 	golang.org/x/crypto v0.6.0
 )
 
+require github.com/vektah/gqlparser/v2 v2.5.6
+
 require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/cli/safeexec v1.0.0 // indirect
