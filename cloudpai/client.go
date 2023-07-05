@@ -17,10 +17,24 @@ import (
 // defaultURL for Atlas Cloud.
 const defaultURL = "https://api.atlasgo.cloud/query"
 
+// roundTripper is a http.RoundTripper that adds the Authorization header.
+type roundTripper struct {
+	token string
+}
+
+// RoundTrip implements http.RoundTripper.
+func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("Authorization", "Bearer "+r.token)
+	req.Header.Set("User-Agent", "gh-atlas-cli")
+	req.Header.Set("Content-Type", "application/json")
+	return http.DefaultTransport.RoundTrip(req)
+}
+
 // Client is a client for the Atlas Cloud API.
 type Client struct {
 	client   *http.Client
 	endpoint string
+	token    string
 }
 
 // New creates a new Client for the Atlas Cloud API.
@@ -36,22 +50,11 @@ func New(endpoint, token string) *Client {
 			},
 			Timeout: time.Second * 30,
 		},
+		token: token,
 	}
 }
 
-// roundTripper is a http.RoundTripper that adds the Authorization header.
-type roundTripper struct {
-	token string
-}
-
-// RoundTrip implements http.RoundTripper.
-func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", "Bearer "+r.token)
-	req.Header.Set("User-Agent", "gh-atlas-cli")
-	req.Header.Set("Content-Type", "application/json")
-	return http.DefaultTransport.RoundTrip(req)
-}
-
+// sends a POST request to the Atlas Cloud API.
 func (c *Client) post(ctx context.Context, query string, vars, data any) error {
 	body, err := json.Marshal(struct {
 		Query     string `json:"query"`
@@ -91,8 +94,8 @@ func (c *Client) post(ctx context.Context, query string, vars, data any) error {
 	return nil
 }
 
-// VerifyToken verifies the token with the Atlas Cloud API.
-func (c *Client) VerifyToken(ctx context.Context, token string) error {
+// VerifyToken verifies the token inside the client with the Atlas Cloud API.
+func (c *Client) VerifyToken(ctx context.Context) error {
 	var (
 		payload struct {
 			ReportGitHubCLI struct {
@@ -107,7 +110,7 @@ func (c *Client) VerifyToken(ctx context.Context, token string) error {
 		vars = struct {
 			Token string `json:"token"`
 		}{
-			Token: token,
+			Token: c.token,
 		}
 	)
 	return c.post(ctx, query, vars, &payload)
