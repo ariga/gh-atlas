@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -93,6 +94,7 @@ func TestRunInitActionCmd(t *testing.T) {
 		PullRequests: &mockService{},
 	}
 	repo, err := repository.Parse("owner/repo")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	require.NoError(t, err)
 	var tests = []struct {
 		name     string
@@ -159,6 +161,7 @@ func TestRunInitActionCmd(t *testing.T) {
 				err = w.Close()
 				require.NoError(t, err)
 				tt.cmd.stdin = &stdinBuffer{r}
+				tt.cmd.cloudURL = srv.URL
 
 				err = tt.cmd.Run(context.Background(), client, repo)
 				if tt.wantErr {
