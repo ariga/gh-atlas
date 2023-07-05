@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -94,7 +95,19 @@ func TestRunInitActionCmd(t *testing.T) {
 		PullRequests: &mockService{},
 	}
 	repo, err := repository.Parse("owner/repo")
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var input struct {
+			Variables struct {
+				Token string `json:"token"`
+			} `json:"variables"`
+		}
+		err := json.NewDecoder(r.Body).Decode(&input)
+		require.NoError(t, err)
+		if input.Variables.Token == "invalid token" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+	}))
 	require.NoError(t, err)
 	var tests = []struct {
 		name     string
@@ -148,6 +161,15 @@ func TestRunInitActionCmd(t *testing.T) {
 				Driver:  "mysql",
 			},
 			prompt:  " \n",
+			wantErr: true,
+		},
+		{
+			name: "invalid token prompt",
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				Driver:  "mysql",
+			},
+			prompt:  "invalid token\n",
 			wantErr: true,
 		},
 	}
