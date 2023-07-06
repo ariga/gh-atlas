@@ -1,12 +1,10 @@
-package cloudpai
+package cloudapi
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -70,7 +68,6 @@ func (c *Client) post(ctx context.Context, query string, vars, data any) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -85,7 +82,7 @@ func (c *Client) post(ctx context.Context, query string, vars, data any) error {
 	}{
 		Data: data,
 	}
-	if err := json.NewDecoder(res.Body).Decode(&scan); err != nil && !errors.Is(err, io.EOF) {
+	if err := json.NewDecoder(res.Body).Decode(&scan); err != nil {
 		return err
 	}
 	if len(scan.Errors) > 0 {

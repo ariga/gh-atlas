@@ -107,6 +107,10 @@ func TestRunInitActionCmd(t *testing.T) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+		body, err := json.Marshal(input)
+		require.NoError(t, err)
+		_, err = w.Write(body)
+		require.NoError(t, err)
 	}))
 	require.NoError(t, err)
 	var tests = []struct {

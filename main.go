@@ -8,7 +8,7 @@ import (
 	"log"
 	"math/rand"
 
-	"ariga.io/gh-atlas/cloudpai"
+	"ariga.io/gh-atlas/cloudapi"
 	"ariga.io/gh-atlas/gen"
 	"github.com/alecthomas/kong"
 	"github.com/cli/go-gh"
@@ -99,7 +99,7 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	if err = i.setParams(dirs); err != nil {
 		return err
 	}
-	if err = cloudpai.New(i.cloudURL, i.Token).ValidateToken(ctx); err != nil {
+	if err = cloudapi.New(i.cloudURL, i.Token).ValidateToken(ctx); err != nil {
 		return errors.New("the given atlas token is invalid, please generate a new one and try again")
 	}
 	if err = repo.SetSecret(ctx, secretName, i.Token); err != nil {

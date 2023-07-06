@@ -1,4 +1,4 @@
-package cloudpai
+package cloudapi
 
 import (
 	"context"
@@ -20,6 +20,10 @@ func TestClient_ValidateToken(t *testing.T) {
 		err := json.NewDecoder(r.Body).Decode(&input)
 		require.NoError(t, err)
 		require.Equal(t, "atlas-secret-token", input.Variables.Token)
+		body, err := json.Marshal(input)
+		require.NoError(t, err)
+		_, err = w.Write(body)
+		require.NoError(t, err)
 	}))
 	client := New(srv.URL, "atlas-secret-token")
 	defer srv.Close()
