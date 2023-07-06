@@ -94,16 +94,16 @@ func (c *Client) post(ctx context.Context, query string, vars, data any) error {
 	return nil
 }
 
-// VerifyToken verifies the token inside the client with the Atlas Cloud API.
-func (c *Client) VerifyToken(ctx context.Context) error {
+// ValidateToken validates the token inside the client with the Atlas Cloud API.
+func (c *Client) ValidateToken(ctx context.Context) error {
 	var (
 		payload struct {
-			ReportGitHubCLI struct {
+			ValidateToken struct {
 				Success bool `json:"success"`
-			} `json:"reportGitHubCLI"`
+			} `json:"validateToken"`
 		}
-		query = `mutation reportGitHubCLI($token: String!) {
-		reportGitHubCLI(atlasCloudToken: $token) {
+		query = `mutation validateToken($token: String!) {
+		validateToken(token: $token) {
 			success
 		}
 	}`

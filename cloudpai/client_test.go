@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestClient_VerifyToken(t *testing.T) {
+func TestClient_ValidateToken(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var input struct {
 			Variables struct {
@@ -23,6 +23,6 @@ func TestClient_VerifyToken(t *testing.T) {
 	}))
 	client := New(srv.URL, "atlas-secret-token")
 	defer srv.Close()
-	err := client.VerifyToken(context.Background())
+	err := client.ValidateToken(context.Background())
 	require.NoError(t, err)
 }

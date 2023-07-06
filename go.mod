@@ -12,10 +12,9 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.8.2
+	github.com/vektah/gqlparser/v2 v2.5.6
 	golang.org/x/crypto v0.6.0
 )
-
-require github.com/vektah/gqlparser/v2 v2.5.6
 
 require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
