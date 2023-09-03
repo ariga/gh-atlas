@@ -88,6 +88,7 @@ jobs:
       - uses: ariga/atlas-sync-action@v0
         with:
           dir: '{{ .Path }}'
+          name: '{{ .Path }}'
           {{- if eq .Driver "mysql" }}
           dev-url: 'mysql://root:pass@localhost:3306/dev'
           {{- else if eq .Driver "postgres" }}
