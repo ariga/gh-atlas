@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"log"
 	"text/template"
 )
 
@@ -15,6 +16,7 @@ type (
 		SecretName    string
 		DefaultBranch string
 		Driver        string
+		Services      string
 	}
 )
 
@@ -28,16 +30,31 @@ func validateDriver(s string) error {
 }
 
 var (
+	//go:embed services.tmpl
+	services_template_resource string
 	//go:embed atlas.tmpl
-	resource string
-	tmpl     *template.Template
+	main_template_resource string
+	tmpl                   *template.Template
 )
 
 func init() {
-	t, err := template.New("atlas.tmpl").Parse(resource)
+	// Based on: https://dev.to/moniquelive/passing-multiple-arguments-to-golang-templates-16h8
+	t := template.New("atlas-sync-action").Funcs(template.FuncMap{"args": func(els ...any) []any {
+		return els
+	}})
+
+	t, err := t.Parse(main_template_resource)
+
 	if err != nil {
-		panic(err)
+		log.Fatalf("Unable to load main template %v", err)
 	}
+
+	t, err = t.Parse(services_template_resource)
+
+	if err != nil {
+		log.Fatalf("Unable to load services template %v", err)
+	}
+
 	tmpl = t
 }
 
@@ -47,7 +64,7 @@ func Generate(cfg *Config) ([]byte, error) {
 		return nil, err
 	}
 	b := bytes.NewBuffer(nil)
-	if err := tmpl.ExecuteTemplate(b, "atlas.tmpl", cfg); err != nil {
+	if err := tmpl.ExecuteTemplate(b, "atlas-sync-action", cfg); err != nil {
 		return nil, err
 	}
 	return b.Bytes(), nil
