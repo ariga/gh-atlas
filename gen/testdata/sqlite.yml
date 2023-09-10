@@ -31,5 +31,5 @@ jobs:
       - uses: ariga/atlas-sync-action@v0
         with:
           dir: 'migrations'
-          driver: sqlite
+          dev-url: 'sqlite://dev?mode=memory'
           cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}

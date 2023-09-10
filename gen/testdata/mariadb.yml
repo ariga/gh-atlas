@@ -13,16 +13,16 @@ permissions:
 jobs:
   lint:
     services:
-      # Spin up a mysql:8 container to be used as the dev-database for analysis.
-      mysql:
-        image: mysql:8
+      # Spin up a mariadb:11 container to be used as the dev-database for analysis.
+      mariadb:
+        image: mariadb:11
         env:
           MYSQL_DATABASE: dev
           MYSQL_ROOT_PASSWORD: pass
         ports:
           - 3306:3306
         options: >-
-          --health-cmd "mysqladmin ping -ppass"
+          --health-cmd "healthcheck.sh --su-mysql --connect --innodb_initialized"
           --health-interval 10s
           --health-start-period 10s
           --health-timeout 5s
@@ -35,21 +35,21 @@ jobs:
       - uses: ariga/atlas-action@v0
         with:
           dir: 'migrations'
-          dev-url: 'mysql://root:pass@localhost:3306/dev'
+          dev-url: 'maria://root:pass@localhost:3306/dev'
           cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
   sync:
     needs: lint
     services:
-      # Spin up a mysql:8 container to be used as the dev-database for analysis.
-      mysql:
-        image: mysql:8
+      # Spin up a mariadb:11 container to be used as the dev-database for analysis.
+      mariadb:
+        image: mariadb:11
         env:
           MYSQL_DATABASE: dev
           MYSQL_ROOT_PASSWORD: pass
         ports:
           - 3306:3306
         options: >-
-          --health-cmd "mysqladmin ping -ppass"
+          --health-cmd "healthcheck.sh --su-mysql --connect --innodb_initialized"
           --health-interval 10s
           --health-start-period 10s
           --health-timeout 5s
@@ -61,5 +61,5 @@ jobs:
       - uses: ariga/atlas-sync-action@v0
         with:
           dir: 'migrations'
-          dev-url: 'mysql://root:pass@mysql:3306/dev'
+          dev-url: 'maria://root:pass@mariadb:3306/dev'
           cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}

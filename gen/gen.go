@@ -2,6 +2,7 @@ package gen
 
 import (
 	"bytes"
+	"embed"
 	_ "embed"
 	"fmt"
 	"text/template"
@@ -15,6 +16,7 @@ type (
 		SecretName    string
 		DefaultBranch string
 		Driver        string
+		Services      string
 	}
 )
 
@@ -28,17 +30,18 @@ func validateDriver(s string) error {
 }
 
 var (
-	//go:embed atlas.tmpl
-	resource string
-	tmpl     *template.Template
+	//go:embed *.tmpl
+	files embed.FS
+
+	tmpl = template.Must(template.New("atlas-sync-action").
+		Funcs(argsFunc()).
+		ParseFS(files, "*.tmpl"))
 )
 
-func init() {
-	t, err := template.New("atlas.tmpl").Parse(resource)
-	if err != nil {
-		panic(err)
-	}
-	tmpl = t
+func argsFunc() template.FuncMap {
+	return template.FuncMap{"args": func(els ...any) []any {
+		return els
+	}}
 }
 
 // Generate the content of the atlas ci lint yaml.
@@ -47,6 +50,7 @@ func Generate(cfg *Config) ([]byte, error) {
 		return nil, err
 	}
 	b := bytes.NewBuffer(nil)
+
 	if err := tmpl.ExecuteTemplate(b, "atlas.tmpl", cfg); err != nil {
 		return nil, err
 	}

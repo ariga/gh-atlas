@@ -12,55 +12,7 @@ permissions:
   pull-requests: write
 jobs:
   lint:
-    {{- if eq .Driver "mysql" }}
-    services:
-      # Spin up a mysql:8 container to be used as the dev-database for analysis.
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_DATABASE: dev
-          MYSQL_ROOT_PASSWORD: pass
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd "mysqladmin ping -ppass"
-          --health-interval 10s
-          --health-start-period 10s
-          --health-timeout 5s
-          --health-retries 10
-    {{- else if eq .Driver "postgres" }}
-    services:
-      # Spin up a postgres:15 container to be used as the dev-database for analysis.
-      postgres15:
-        image: postgres:15
-        env:
-          POSTGRES_DB: dev
-          POSTGRES_PASSWORD: pass
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-start-period 10s
-          --health-timeout 5s
-          --health-retries 5
-    {{- else if eq .Driver "mariadb" }}
-    services:
-      # Spin up a mariadb:11 container to be used as the dev-database for analysis.
-      maria11:
-        image: mariadb:11
-        env:
-          MYSQL_DATABASE: dev
-          MYSQL_ROOT_PASSWORD: pass
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd "mysqladmin ping -ppass"
-          --health-interval 10s
-          --health-start-period 10s
-          --health-timeout 5s
-          --health-retries 10
-    {{- end }}
+    {{- template "services" . }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -69,18 +21,11 @@ jobs:
       - uses: ariga/atlas-action@v0
         with:
           dir: '{{ .Path }}'
-          {{- if eq .Driver "mysql" }}
-          dev-url: 'mysql://root:pass@localhost:3306/dev'
-          {{- else if eq .Driver "postgres" }}
-          dev-url: 'postgres://postgres:pass@localhost:5432/dev?sslmode=disable'
-          {{- else if eq .Driver "mariadb" }}
-          dev-url: 'maria://root:pass@localhost:3306/dev'
-          {{- else if eq .Driver "sqlite" }}
-          dev-url: 'sqlite://dev?mode=memory'
-          {{- end }}
+          {{ template "UseServices" (args .Driver "localhost") }}
           cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
   sync:
     needs: lint
+    {{- template "services" . }}
     if: github.ref == 'refs/heads/{{ .DefaultBranch }}'
     runs-on: ubuntu-latest
     steps:
@@ -88,5 +33,5 @@ jobs:
       - uses: ariga/atlas-sync-action@v0
         with:
           dir: '{{ .Path }}'
-          driver: {{ .Driver }}
+          {{ template "UseServices" (args .Driver .Driver) }}
           cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
