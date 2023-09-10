@@ -30,10 +30,10 @@ func validateDriver(s string) error {
 
 var (
 	//go:embed services.tmpl
-	services_template_resource string
+	servicesTemplateResource string
 	//go:embed atlas.tmpl
-	main_template_resource string
-	tmpl                   *template.Template
+	mainTemplateResource string
+	tmpl                 *template.Template
 )
 
 func init() {
@@ -41,8 +41,8 @@ func init() {
 		return els
 	}})
 
-	t = template.Must(t.Parse(main_template_resource))
-	tmpl = template.Must(t.Parse(services_template_resource))
+	t = template.Must(t.Parse(mainTemplateResource))
+	tmpl = template.Must(t.Parse(servicesTemplateResource))
 }
 
 // Generate the content of the atlas ci lint yaml.
