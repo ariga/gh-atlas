@@ -2,7 +2,7 @@
 {{- if eq .Driver "mysql" }}
     services:
       # Spin up a mysql:8 container to be used as the dev-database for analysis.
-      {{ .Driver }}:
+      mysql:
         image: mysql:8
         env:
           MYSQL_DATABASE: dev
@@ -18,7 +18,7 @@
     {{- else if eq .Driver "postgres" }}
     services:
       # Spin up a postgres:15 container to be used as the dev-database for analysis.
-      {{ .Driver }}:
+      postgres:
         image: postgres:15
         env:
           POSTGRES_DB: dev
@@ -34,7 +34,7 @@
     {{- else if eq .Driver "mariadb" }}
     services:
       # Spin up a mariadb:11 container to be used as the dev-database for analysis.
-      {{ .Driver }}:
+      mariadb:
         image: mariadb:11
         env:
           MYSQL_DATABASE: dev
