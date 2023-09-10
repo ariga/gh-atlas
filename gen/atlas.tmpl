@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ariga/atlas-sync-action@master
+      - uses: ariga/atlas-sync-action@v0
         with:
           dir: '{{ .Path }}'
           {{ template "UseServices" (args .Driver .Driver) }}
