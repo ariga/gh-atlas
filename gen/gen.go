@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"log"
 	"text/template"
 )
 
@@ -42,19 +41,8 @@ func init() {
 		return els
 	}})
 
-	t, err := t.Parse(main_template_resource)
-
-	if err != nil {
-		log.Fatalf("Unable to load main template %v", err)
-	}
-
-	t, err = t.Parse(services_template_resource)
-
-	if err != nil {
-		log.Fatalf("Unable to load services template %v", err)
-	}
-
-	tmpl = t
+	t = template.Must(t.Parse(main_template_resource))
+	tmpl = template.Must(t.Parse(services_template_resource))
 }
 
 // Generate the content of the atlas ci lint yaml.
