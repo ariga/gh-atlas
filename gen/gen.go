@@ -38,7 +38,6 @@ var (
 )
 
 func init() {
-	// Based on: https://dev.to/moniquelive/passing-multiple-arguments-to-golang-templates-16h8
 	t := template.New("atlas-sync-action").Funcs(template.FuncMap{"args": func(els ...any) []any {
 		return els
 	}})
