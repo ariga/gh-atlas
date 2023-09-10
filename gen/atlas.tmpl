@@ -25,7 +25,7 @@ jobs:
           cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
   sync:
     needs: lint
-    {{- template "Services" . }}
+    {{- template "services" . }}
     if: github.ref == 'refs/heads/{{ .DefaultBranch }}'
     runs-on: ubuntu-latest
     steps:
