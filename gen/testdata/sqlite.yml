@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: ariga/atlas-action@master
+      - uses: ariga/atlas-action@v0
         with:
           dir: 'migrations'
           dev-url: 'sqlite://dev?mode=memory'
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ariga/atlas-sync-action@master
+      - uses: ariga/atlas-sync-action@v0
         with:
           dir: 'migrations'
           dev-url: 'sqlite://dev?mode=memory'
