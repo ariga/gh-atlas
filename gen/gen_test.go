@@ -17,6 +17,7 @@ func TestGen(t *testing.T) {
 			require.NoError(t, err)
 			cfg := &Config{
 				Path:          "migrations",
+				DirName:       "migrations",
 				DefaultBranch: "master",
 				SecretName:    "ATLAS_CLOUD_TOKEN",
 				Driver:        strings.TrimSuffix(f.Name(), ".yml"),

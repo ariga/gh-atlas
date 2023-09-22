@@ -51,6 +51,7 @@ var cli struct {
 // InitActionCmd is the command for initializing a new Atlas CI workflow.
 type InitActionCmd struct {
 	DirPath  string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
+	DirName  string        `arg:"" optional:"" type:"-dir-name" help:"Target migration directory name (slug)"`
 	Driver   string        `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
 	Token    string        `short:"t" help:"Atlas authentication token."`
 	Repo     string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
@@ -110,6 +111,7 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	}
 	cfg := &gen.Config{
 		Path:          i.DirPath,
+		DirName:       i.DirName,
 		Driver:        i.Driver,
 		SecretName:    secretName,
 		DefaultBranch: repo.defaultBranch,
