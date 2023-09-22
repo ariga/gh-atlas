@@ -21,7 +21,9 @@ jobs:
       - uses: ariga/atlas-action@v0
         with:
           dir: '{{ .Path }}'
-          dir-name: '{{ .DirName }}'
+{{- with .DirName }}
+          dir-name: '{{ . }}'
+{{- end }}
           {{ template "UseServices" (args .Driver "localhost") }}
           cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
   sync:
