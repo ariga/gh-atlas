@@ -36,5 +36,8 @@ jobs:
       - uses: ariga/atlas-sync-action@v0
         with:
           dir: '{{ .Path }}'
+{{- with .DirName }}
+          dir-name: '{{ . }}'
+{{- end }}
           {{ template "UseServices" (args .Driver .Driver) }}
           cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
