@@ -35,6 +35,7 @@ jobs:
       - uses: ariga/atlas-action@v0
         with:
           dir: 'migrations'
+          dir-name: 'name'
           dev-url: 'mysql://root:pass@localhost:3306/dev'
           cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
   sync:
@@ -61,5 +62,6 @@ jobs:
       - uses: ariga/atlas-sync-action@v0
         with:
           dir: 'migrations'
+          name: 'name'
           dev-url: 'mysql://root:pass@mysql:3306/dev'
           cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}

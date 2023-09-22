@@ -20,6 +20,7 @@ jobs:
       - uses: ariga/atlas-action@v0
         with:
           dir: 'migrations'
+          dir-name: 'name'
           dev-url: 'sqlite://dev?mode=memory'
           cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
   sync:
@@ -31,5 +32,6 @@ jobs:
       - uses: ariga/atlas-sync-action@v0
         with:
           dir: 'migrations'
+          name: 'name'
           dev-url: 'sqlite://dev?mode=memory'
           cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
