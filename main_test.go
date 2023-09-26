@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/cli/go-gh/pkg/repository"
@@ -96,18 +97,31 @@ func TestRunInitActionCmd(t *testing.T) {
 	}
 	repo, err := repository.Parse("owner/repo")
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var input struct {
-			Variables struct {
-				Token string `json:"token"`
-			} `json:"variables"`
-		}
-		err := json.NewDecoder(r.Body).Decode(&input)
+		var (
+			input struct {
+				Query     string `json:"query,omitempty"`
+				Variables struct {
+					Token string `json:"token"`
+				} `json:"variables"`
+			}
+			payload struct {
+				Data struct {
+					DirSlugs []string `json:"dirSlugs"`
+				} `json:"data"`
+			}
+		)
+		err = json.NewDecoder(r.Body).Decode(&input)
 		require.NoError(t, err)
-		if input.Variables.Token == "invalid token" {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
+		if strings.Contains(input.Query, "validateToken") {
+			if input.Variables.Token == "invalid token" {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
 		}
-		body, err := json.Marshal(input)
+		if strings.Contains(input.Query, "dirSlugs") {
+			payload.Data.DirSlugs = []string{"name"}
+		}
+		body, err := json.Marshal(payload)
 		require.NoError(t, err)
 		_, err = w.Write(body)
 		require.NoError(t, err)
@@ -124,11 +138,13 @@ func TestRunInitActionCmd(t *testing.T) {
 			name: "all arg and flags supplied",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
+				DirName: "name",
 				Driver:  "mysql",
 				Token:   "token",
 			},
 			expected: &InitActionCmd{
 				DirPath: "migrations",
+				DirName: "name",
 				Driver:  "mysql",
 				Token:   "token",
 			},
@@ -136,11 +152,28 @@ func TestRunInitActionCmd(t *testing.T) {
 		{
 			name: "no dir path and driver supplied",
 			cmd: &InitActionCmd{
-				Token: "token",
+				Token:   "token",
+				DirName: "name",
 			},
 			prompt: "\n\n",
 			expected: &InitActionCmd{
 				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+		},
+		{
+			name: "no dir name supplied",
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+			prompt: "\n",
+			expected: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
 				Driver:  "mysql",
 				Token:   "token",
 			},
@@ -149,11 +182,13 @@ func TestRunInitActionCmd(t *testing.T) {
 			name: "no token flag supplied",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
+				DirName: "name",
 				Driver:  "mysql",
 			},
 			prompt: "my token\n",
 			expected: &InitActionCmd{
 				DirPath: "migrations",
+				DirName: "name",
 				Driver:  "mysql",
 				Token:   "my token",
 			},
@@ -198,6 +233,7 @@ func TestRunInitActionCmd(t *testing.T) {
 				require.Equal(t, tt.expected.Token, tt.cmd.Token)
 				require.Equal(t, tt.expected.Driver, tt.cmd.Driver)
 				require.Equal(t, tt.expected.DirPath, tt.cmd.DirPath)
+				require.Equal(t, tt.expected.DirName, tt.cmd.DirName)
 			})
 		}
 	}

@@ -2,7 +2,7 @@ package gen
 
 import (
 	"fmt"
-"os"
+	"os"
 	"strings"
 	"testing"
 

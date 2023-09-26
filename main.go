@@ -104,7 +104,8 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	if err = cloud.ValidateToken(ctx); err != nil {
 		return errors.New("the given atlas token is invalid, please generate a new one and try again")
 	}
-	dirNames, err := cloud.DirNames(ctx); if err != nil {
+	dirNames, err := cloud.DirNames(ctx)
+	if err != nil {
 		return err
 	}
 	// If dir name is not set by the user, and there are dirs in the cloud, prompt the user to choose one.
