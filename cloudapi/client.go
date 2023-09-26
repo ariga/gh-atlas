@@ -112,3 +112,19 @@ func (c *Client) ValidateToken(ctx context.Context) error {
 	)
 	return c.post(ctx, query, vars, &payload)
 }
+
+// DirNames fetches the names of all migration directories from the Atlas Cloud API.
+func (c *Client) DirNames(ctx context.Context) ([]string, error) {
+	var (
+		payload struct {
+			DirSlugs []string `json:"dirSlugs"`
+		}
+		query = `query {
+			dirSlugs
+		}`
+	)
+	if err := c.post(ctx, query, nil, &payload); err != nil {
+		return nil, err
+	}
+	return payload.DirSlugs, nil
+}

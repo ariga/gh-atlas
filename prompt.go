@@ -12,7 +12,7 @@ func (i *InitActionCmd) setParams(dirs []string) error {
 	var err error
 	if i.DirPath == "" {
 		prompt := promptui.Select{
-			Label: "choose migration directory",
+			Label: "Choose migration directory",
 			Items: dirs,
 			Stdin: i.stdin,
 		}
@@ -20,7 +20,7 @@ func (i *InitActionCmd) setParams(dirs []string) error {
 			return err
 		}
 		prompt = promptui.Select{
-			Label: "choose driver",
+			Label: "Choose driver",
 			Items: []string{"mysql", "postgres", "mariadb", "sqlite"},
 			Stdin: i.stdin,
 		}
@@ -43,6 +43,31 @@ func (i *InitActionCmd) setParams(dirs []string) error {
 		if i.Token, err = prompt.Run(); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (i *InitActionCmd) setDirName(names []string) error {
+	var err error
+	prompt := promptui.Select{
+		Label: "Choose action",
+		Items: []string{"Use existing directory from the Cloud", "Create new directory"},
+		Stdin: i.stdin,
+	}
+	_, rsp, err := prompt.Run()
+	if err != nil {
+		return err
+	}
+	if rsp == "Create new directory" {
+		return nil
+	}
+	prompt = promptui.Select{
+		Label: "Choose name of cloud migration directory",
+		Items: names,
+		Stdin: i.stdin,
+	}
+	if _, i.DirName, err = prompt.Run(); err != nil {
+		return err
 	}
 	return nil
 }
