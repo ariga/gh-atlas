@@ -1,7 +1,6 @@
 package gen
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -24,7 +23,6 @@ func TestGen(t *testing.T) {
 				Driver:        strings.TrimSuffix(f.Name(), ".yml"),
 			}
 			actual, err := Generate(cfg)
-			fmt.Print(string(actual))
 			require.NoError(t, err)
 			require.Equal(t, strings.TrimSpace(string(expected)), strings.TrimSpace(string(actual)))
 		})
