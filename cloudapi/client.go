@@ -120,8 +120,8 @@ func (c *Client) DirNames(ctx context.Context) ([]string, error) {
 			DirSlugs []string `json:"dirSlugs"`
 		}
 		query = `query {
-		dirSlugs
-	}`
+			dirSlugs
+		}`
 	)
 	if err := c.post(ctx, query, nil, &payload); err != nil {
 		return nil, err

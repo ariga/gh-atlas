@@ -164,16 +164,31 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name: "no dir name supplied",
+			name: "no dir name supplied use cloud dir name",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
 				Token:   "token",
 			},
-			prompt: "\n",
+			prompt: "\n\n",
 			expected: &InitActionCmd{
 				DirPath: "migrations",
 				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+		},
+		{
+			name: "no dir name supplied dont use cloud",
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+			// use arrow key down and then enter
+			prompt: "\x1b[B\n\n",
+			expected: &InitActionCmd{
+				DirPath: "migrations",
 				Driver:  "mysql",
 				Token:   "token",
 			},
