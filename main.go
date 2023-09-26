@@ -51,10 +51,10 @@ var cli struct {
 // InitActionCmd is the command for initializing a new Atlas CI workflow.
 type InitActionCmd struct {
 	DirPath  string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
-	DirName  string        `arg:"" optional:"" type:"-dir-name" help:"Target migration directory name (slug)"`
 	Driver   string        `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
 	Token    string        `short:"t" help:"Atlas authentication token."`
 	Repo     string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
+	DirName  string        `optional:"" help:"Name of target migration directory in Atlas Cloud."`
 	stdin    io.ReadCloser `hidden:""`
 	cloudURL string        `hidden:""`
 }
@@ -63,7 +63,7 @@ func (i *InitActionCmd) Help() string {
 	return `Examples:
 	gh atlas init-action
 	gh atlas init-action --token=$ATLAS_CLOUD_TOKEN
-	gh atlas init-action --token=$ATLAS_CLOUD_TOKEN --driver="mysql" "dir/migrations"`
+	gh atlas init-action --token=$ATLAS_CLOUD_TOKEN --dir-name="migrations" --driver="mysql" "dir/migrations"`
 }
 
 const (
@@ -100,8 +100,18 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	if err = i.setParams(dirs); err != nil {
 		return err
 	}
-	if err = cloudapi.New(i.cloudURL, i.Token).ValidateToken(ctx); err != nil {
+	cloud := cloudapi.New(i.cloudURL, i.Token)
+	if err = cloud.ValidateToken(ctx); err != nil {
 		return errors.New("the given atlas token is invalid, please generate a new one and try again")
+	}
+	dirNames, err := cloud.DirNames(ctx); if err != nil {
+		return err
+	}
+	// If dir name is not set by the user, and there are dirs in the cloud, prompt the user to choose one.
+	if i.DirName == "" && len(dirNames) > 0 {
+		if err = i.setDirName(dirNames); err != nil {
+			return err
+		}
 	}
 	if err = repo.SetSecret(ctx, secretName, i.Token); err != nil {
 		return err
