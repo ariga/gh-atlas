@@ -9,10 +9,11 @@ import (
 	"path"
 	"strings"
 
-	"ariga.io/gh-atlas/gen"
 	"github.com/cli/go-gh/pkg/repository"
 	"github.com/google/go-github/v49/github"
 	"golang.org/x/crypto/nacl/box"
+
+	"ariga.io/gh-atlas/gen"
 )
 
 type (
@@ -25,6 +26,7 @@ type (
 	// repositoriesService handles communication with the repository related methods of the GitHub API.
 	repositoriesService interface {
 		Get(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
+		GetContents(ctx context.Context, owner, repo, path string, opts *github.RepositoryContentGetOptions) (fileContent *github.RepositoryContent, directoryContent []*github.RepositoryContent, resp *github.Response, err error)
 		CreateFile(ctx context.Context, owner, repo, path string, opts *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error)
 	}
 	// actionsService handles communication with the actions related methods of the GitHub API.
@@ -117,7 +119,8 @@ func (r *Repository) SetSecret(ctx context.Context, name, value string) error {
 }
 
 // AddAtlasYAML create commit with atlas ci yaml file on the branch.
-func (r *Repository) AddAtlasYAML(ctx context.Context, cfg *gen.Config, branchName, commitMsg string) error {
+func (r *Repository) AddAtlasYAML(ctx context.Context, cfg *gen.Config, branchName, commitMsg string, replace bool) error {
+	var actionFilePath = ".github/workflows/ci-atlas.yaml"
 	content, err := gen.Generate(cfg)
 	if err != nil {
 		return err
@@ -127,7 +130,21 @@ func (r *Repository) AddAtlasYAML(ctx context.Context, cfg *gen.Config, branchNa
 		Content: content,
 		Branch:  github.String(branchName),
 	}
-	_, _, err = r.client.Repositories.CreateFile(ctx, r.owner, r.name, ".github/workflows/ci-atlas.yaml", newFile)
+	current, _, _, err := r.client.Repositories.GetContents(ctx, r.owner, r.name, actionFilePath, nil)
+	switch e := err.(type) {
+	case nil:
+		if !replace {
+			return errors.New("atlas ci yaml file already exists, use --replace to replace it")
+		}
+		newFile.SHA = current.SHA
+	case *github.ErrorResponse:
+		if e.Message != "Not Found" {
+			return err
+		}
+	default:
+		return err
+	}
+	_, _, err = r.client.Repositories.CreateFile(ctx, r.owner, r.name, actionFilePath, newFile)
 	return err
 }
 
