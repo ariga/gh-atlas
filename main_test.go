@@ -16,7 +16,9 @@ import (
 )
 
 // mockService is a mock implementation of necessary GitHub API methods.
-type mockService struct{}
+type mockService struct {
+	getContentError error
+}
 
 func (m *mockService) GetRef(context.Context, string, string, string) (*github.Reference, *github.Response, error) {
 	ref := &github.Reference{
@@ -31,6 +33,10 @@ func (m *mockService) CreateRef(context.Context, string, string, *github.Referen
 }
 func (m *mockService) Get(context.Context, string, string) (*github.Repository, *github.Response, error) {
 	return nil, nil, nil
+}
+func (m *mockService) GetContents(context.Context, string, string, string, *github.RepositoryContentGetOptions) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error) {
+	sha := "12345"
+	return &github.RepositoryContent{SHA: &sha}, nil, nil, m.getContentError
 }
 func (m *mockService) CreateFile(context.Context, string, string, string, *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error) {
 	return nil, nil, nil
@@ -88,13 +94,16 @@ func (b *stdinBuffer) Read(dst []byte) (int, error) {
 	return n, nil
 }
 
-func TestRunInitActionCmd(t *testing.T) {
-	client := &githubClient{
+func createGHClient(repoSvc repositoriesService) *githubClient {
+	return &githubClient{
 		Git:          &mockService{},
-		Repositories: &mockService{},
+		Repositories: repoSvc,
 		Actions:      &mockService{},
 		PullRequests: &mockService{},
 	}
+}
+
+func TestRunInitActionCmd(t *testing.T) {
 	repo, err := repository.Parse("owner/repo")
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
@@ -129,13 +138,15 @@ func TestRunInitActionCmd(t *testing.T) {
 	require.NoError(t, err)
 	var tests = []struct {
 		name     string
+		client   *githubClient
 		cmd      *InitActionCmd // initial command to run
 		prompt   string         // user interaction with the terminal
 		expected *InitActionCmd // expected command after user interaction
 		wantErr  bool           // whether the command should return an error
 	}{
 		{
-			name: "all arg and flags supplied",
+			name:   "all arg and flags supplied",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				DirName: "name",
@@ -150,7 +161,8 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name: "no dir path and driver supplied",
+			name:   "no dir path and driver supplied",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
 			cmd: &InitActionCmd{
 				Token:   "token",
 				DirName: "name",
@@ -164,7 +176,8 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name: "no dir name supplied use cloud dir name",
+			name:   "no dir name supplied use cloud dir name",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
@@ -179,7 +192,8 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name: "no dir name supplied dont use cloud",
+			name:   "no dir name supplied dont use cloud",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
@@ -194,7 +208,8 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name: "no token flag supplied",
+			name:   "no token flag supplied",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				DirName: "name",
@@ -209,7 +224,8 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name: "empty token prompt",
+			name:   "empty token prompt",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
@@ -218,13 +234,45 @@ func TestRunInitActionCmd(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid token prompt",
+			name:   "invalid token prompt",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
 			},
 			prompt:  "invalid token\n",
 			wantErr: true,
+		},
+		{
+			name:   "file exists",
+			client: createGHClient(&mockService{}),
+			prompt: "my token\n",
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+			wantErr: true,
+		},
+		{
+			name:   "replace existing file",
+			client: createGHClient(&mockService{}),
+			prompt: "my token\n",
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+				Replace: true,
+			},
+			expected: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+				Replace: true,
+			},
 		},
 	}
 	{
@@ -239,7 +287,7 @@ func TestRunInitActionCmd(t *testing.T) {
 				tt.cmd.stdin = &stdinBuffer{r}
 				tt.cmd.cloudURL = srv.URL
 
-				err = tt.cmd.Run(context.Background(), client, repo)
+				err = tt.cmd.Run(context.Background(), tt.client, repo)
 				if tt.wantErr {
 					require.Error(t, err)
 					return
@@ -249,6 +297,7 @@ func TestRunInitActionCmd(t *testing.T) {
 				require.Equal(t, tt.expected.Driver, tt.cmd.Driver)
 				require.Equal(t, tt.expected.DirPath, tt.cmd.DirPath)
 				require.Equal(t, tt.expected.DirName, tt.cmd.DirName)
+				require.Equal(t, tt.expected.Replace, tt.cmd.Replace)
 			})
 		}
 	}

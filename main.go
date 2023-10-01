@@ -8,13 +8,14 @@ import (
 	"log"
 	"math/rand"
 
-	"ariga.io/gh-atlas/cloudapi"
-	"ariga.io/gh-atlas/gen"
 	"github.com/alecthomas/kong"
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/repository"
 	"github.com/google/go-github/v49/github"
 	"github.com/pkg/browser"
+
+	"ariga.io/gh-atlas/cloudapi"
+	"ariga.io/gh-atlas/gen"
 )
 
 func main() {
@@ -55,6 +56,7 @@ type InitActionCmd struct {
 	Token    string        `short:"t" help:"Atlas authentication token."`
 	Repo     string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
 	DirName  string        `optional:"" help:"Name of target migration directory in Atlas Cloud."`
+	Replace  bool          `optional:"" help:"Replace existing Atlas CI workflow."`
 	stdin    io.ReadCloser `hidden:""`
 	cloudURL string        `hidden:""`
 }
@@ -127,7 +129,7 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		SecretName:    secretName,
 		DefaultBranch: repo.defaultBranch,
 	}
-	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg); err != nil {
+	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg, i.Replace); err != nil {
 		return err
 	}
 	link, err := repo.CreatePR(ctx, commitMsg, prBody, branchName)
