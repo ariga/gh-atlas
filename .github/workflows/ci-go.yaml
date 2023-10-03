@@ -56,6 +56,16 @@ jobs:
       - name: Run GitHub atlas extension
         run: |
           gh atlas init-action -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --dir-name="sync-action-integration-test" --driver="sqlite" "sqlite_dir"
+      - name: Run Gituh atlas extension with invalid dir
+        id: invalid_dir
+        continue-on-error: true
+        run: |
+          gh atlas init-action -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --dir-name="invalid" --driver="sqlite" "sqlite_dir"
+      - name: Check invalid dir error
+        if : steps.invalid_dir.outcome == 'success'
+        run: |
+          echo "Invalid dir should fail"
+          exit 1
       - name: Validate pull request is created
         uses: nick-fields/retry@v2
         with:

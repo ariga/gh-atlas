@@ -107,14 +107,11 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	if err = cloud.ValidateToken(ctx); err != nil {
 		return errors.New("the given atlas token is invalid, please generate a new one and try again")
 	}
-	dirNames, err := cloud.DirNames(ctx)
-	if err != nil {
+	switch dirNames, err := cloud.DirNames(ctx); {
+	case err != nil:
 		return err
-	}
-	if len(dirNames) == 0 {
+	case len(dirNames) == 0:
 		return errors.New("no migration directories found in your organization")
-	}
-	switch {
 	case i.DirName == "":
 		// If the dir name was not provided by the user, set it interactively.
 		if err := i.setDirName(dirNames); err != nil {
