@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - master
+    paths:
+      - .github/workflows/ci-atlas.yaml
+      - 'migrations/*'
   pull_request:
     paths:
       - 'migrations/*'
@@ -11,27 +14,23 @@ permissions:
   contents: read
   pull-requests: write
 jobs:
-  lint:
+  atlas:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: ariga/atlas-action@v0
+      - uses: ariga/setup-atlas@v0
         with:
-          dir: 'migrations'
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
+      - uses: ariga/atlas-action/migrate/lint@v1
+        with:
+          dir: 'file://migrations'
           dir-name: 'name'
           dev-url: 'sqlite://dev?mode=memory'
-          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
-  sync:
-    needs: lint
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ariga/atlas-sync-action@v0
+      - uses: ariga/atlas-action/migrate/push@v1
+        if: github.ref == 'refs/heads/master'
         with:
-          dir: 'migrations'
-          name: 'name'
-          dev-url: 'sqlite://dev?mode=memory'
-          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
+            dir: 'file://migrations'
+            dir-name: 'name'
+            dev-url: 'sqlite://dev?mode=memory'

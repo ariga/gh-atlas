@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - master
+    paths:
+      - .github/workflows/ci-atlas.yaml
+      - 'migrations/*'
   pull_request:
     paths:
       - 'migrations/*'
@@ -11,7 +14,7 @@ permissions:
   contents: read
   pull-requests: write
 jobs:
-  lint:
+  atlas:
     services:
       # Spin up a mysql:8 container to be used as the dev-database for analysis.
       mysql:
@@ -32,36 +35,17 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: ariga/atlas-action@v0
+      - uses: ariga/setup-atlas@v0
         with:
-          dir: 'migrations'
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
+      - uses: ariga/atlas-action/migrate/lint@v1
+        with:
+          dir: 'file://migrations'
           dir-name: 'name'
           dev-url: 'mysql://root:pass@localhost:3306/dev'
-          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
-  sync:
-    needs: lint
-    services:
-      # Spin up a mysql:8 container to be used as the dev-database for analysis.
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_DATABASE: dev
-          MYSQL_ROOT_PASSWORD: pass
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd "mysqladmin ping -ppass"
-          --health-interval 10s
-          --health-start-period 10s
-          --health-timeout 5s
-          --health-retries 10
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ariga/atlas-sync-action@v0
+      - uses: ariga/atlas-action/migrate/push@v1
+        if: github.ref == 'refs/heads/master'
         with:
-          dir: 'migrations'
-          name: 'name'
-          dev-url: 'mysql://root:pass@mysql:3306/dev'
-          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
+            dir: 'file://migrations'
+            dir-name: 'name'
+            dev-url: 'mysql://root:pass@localhost:3306/dev'
