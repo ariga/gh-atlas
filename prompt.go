@@ -48,26 +48,16 @@ func (i *InitActionCmd) setParams(dirs []string) error {
 }
 
 func (i *InitActionCmd) setDirName(names []string) error {
-	var err error
-	prompt := promptui.Select{
-		Label: "Choose action",
-		Items: []string{"Use existing directory from the Cloud", "Create new directory"},
-		Stdin: i.stdin,
-	}
-	_, rsp, err := prompt.Run()
-	if err != nil {
-		return err
-	}
-	if rsp == "Create new directory" {
+	if len(names) == 1 {
+		i.DirName = names[0]
 		return nil
 	}
-	prompt = promptui.Select{
+	var err error
+	prompt := promptui.Select{
 		Label: "Choose name of cloud migration directory",
 		Items: names,
 		Stdin: i.stdin,
 	}
-	if _, i.DirName, err = prompt.Run(); err != nil {
-		return err
-	}
-	return nil
+	_, i.DirName, err = prompt.Run()
+	return err
 }

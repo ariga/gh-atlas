@@ -1,6 +1,6 @@
 module ariga.io/gh-atlas
 
-go 1.20
+go 1.21
 
 require (
 	github.com/1lann/promptui v0.8.1-0.20220708222609-81fad96dd5e1
