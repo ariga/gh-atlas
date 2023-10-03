@@ -105,6 +105,11 @@ func createGHClient(repoSvc repositoriesService) *githubClient {
 
 func TestRunInitActionCmd(t *testing.T) {
 	repo, err := repository.Parse("owner/repo")
+	dirsByToken := map[string][]string{
+		"token":    {"name"},
+		"multiple": {"name", "name2"},
+		"empty":    {},
+	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			input struct {
@@ -128,7 +133,10 @@ func TestRunInitActionCmd(t *testing.T) {
 			}
 		}
 		if strings.Contains(input.Query, "dirSlugs") {
-			payload.Data.DirSlugs = []string{"name"}
+			token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+			require.True(t, ok)
+			payload.Data.DirSlugs, ok = dirsByToken[token]
+			require.True(t, ok)
 		}
 		body, err := json.Marshal(payload)
 		require.NoError(t, err)
@@ -192,19 +200,72 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name:   "no dir name supplied dont use cloud",
+			name:   "no dirs in organization",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				Driver:  "mysql",
+				Token:   "empty",
+			},
+			wantErr: true,
+		},
+		{
+			name:   "dir name provided but doesn't exist in cloud",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				Driver:  "mysql",
+				DirName: "invalid",
+				Token:   "token",
+			},
+			wantErr: true,
+		},
+		{
+			name:   "single dir in organization",
 			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
 				Token:   "token",
 			},
+			expected: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+		},
+		{
+			name:   "multiple dirs in organization",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				Driver:  "mysql",
+				Token:   "multiple",
+			},
 			// use arrow key down and then enter
 			prompt: "\x1b[B\n\n",
 			expected: &InitActionCmd{
 				DirPath: "migrations",
+				DirName: "name2",
 				Driver:  "mysql",
-				Token:   "token",
+				Token:   "multiple",
+			},
+		},
+		{
+			name:   "provide directory name",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				Driver:  "mysql",
+				DirName: "name",
+				Token:   "multiple",
+			},
+			expected: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "multiple",
 			},
 		},
 		{
@@ -215,12 +276,12 @@ func TestRunInitActionCmd(t *testing.T) {
 				DirName: "name",
 				Driver:  "mysql",
 			},
-			prompt: "my token\n",
+			prompt: "token\n",
 			expected: &InitActionCmd{
 				DirPath: "migrations",
 				DirName: "name",
 				Driver:  "mysql",
-				Token:   "my token",
+				Token:   "token",
 			},
 		},
 		{
@@ -244,7 +305,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:   "file exists",
+			name:   "ci file exists",
 			client: createGHClient(&mockService{}),
 			prompt: "my token\n",
 			cmd: &InitActionCmd{
@@ -256,7 +317,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:   "replace existing file",
+			name:   "replace existing ci file",
 			client: createGHClient(&mockService{}),
 			prompt: "my token\n",
 			cmd: &InitActionCmd{

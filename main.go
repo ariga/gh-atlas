@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"math/rand"
+	"slices"
 
 	"github.com/alecthomas/kong"
 	"github.com/cli/go-gh"
@@ -106,15 +107,18 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	if err = cloud.ValidateToken(ctx); err != nil {
 		return errors.New("the given atlas token is invalid, please generate a new one and try again")
 	}
-	dirNames, err := cloud.DirNames(ctx)
-	if err != nil {
+	switch dirNames, err := cloud.DirNames(ctx); {
+	case err != nil:
 		return err
-	}
-	// If dir name is not set by the user, and there are dirs in the cloud, prompt the user to choose one.
-	if i.DirName == "" && len(dirNames) > 0 {
-		if err = i.setDirName(dirNames); err != nil {
+	case len(dirNames) == 0:
+		return errors.New("no migration directories found in your organization")
+	case i.DirName == "":
+		// If the dir name was not provided by the user, set it interactively.
+		if err := i.setDirName(dirNames); err != nil {
 			return err
 		}
+	case !slices.Contains(dirNames, i.DirName):
+		return fmt.Errorf("no migration directory with name %q found in your organization", i.DirName)
 	}
 	if err = repo.SetSecret(ctx, secretName, i.Token); err != nil {
 		return err
