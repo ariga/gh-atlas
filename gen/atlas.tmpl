@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - {{ .DefaultBranch }}
+    paths:
+      - .github/workflows/ci-atlas.yaml
+      - '{{ .Path }}/*'
   pull_request:
     paths:
       - '{{ .Path }}/*'
@@ -11,33 +14,29 @@ permissions:
   contents: read
   pull-requests: write
 jobs:
-  lint:
+  atlas:
     {{- template "services" . }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: ariga/atlas-action@v0
+      - uses: ariga/setup-atlas@v0
         with:
-          dir: '{{ .Path }}'
-{{- with .DirName }}
+          cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
+      - uses: ariga/atlas-action/migrate/lint@master
+        with:
+          dir: 'file://{{ .Path }}'
+          {{- with .DirName }}
           dir-name: '{{ . }}'
-{{- end }}
+          {{- end }}
           {{ template "UseServices" (args .Driver "localhost") }}
-          cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
-  sync:
-    needs: lint
-    {{- template "services" . }}
-    if: github.ref == 'refs/heads/{{ .DefaultBranch }}'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ariga/atlas-sync-action@v0
+      - uses: ariga/atlas-action/migrate/push@master
+        if: github.ref == 'refs/heads/master'
         with:
-          dir: '{{ .Path }}'
-{{- with .DirName }}
-          name: '{{ . }}'
-{{- end }}
-          {{ template "UseServices" (args .Driver .Driver) }}
-          cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
+            dir: 'file://{{ .Path }}'
+            {{- with .DirName }}
+            dir-name: '{{ . }}'
+            {{- end }}
+            {{ template "UseServices" (args .Driver "localhost") }}
+            cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
