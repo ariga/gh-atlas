@@ -24,19 +24,18 @@ jobs:
       - uses: ariga/setup-atlas@v0
         with:
           cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
-      - uses: ariga/atlas-action/migrate/lint@master
+      - uses: ariga/atlas-action/migrate/lint@v1
         with:
           dir: 'file://{{ .Path }}'
           {{- with .DirName }}
           dir-name: '{{ . }}'
           {{- end }}
-          {{ template "UseServices" (args .Driver "localhost") }}
-      - uses: ariga/atlas-action/migrate/push@master
+          {{ template "UseServices" . }}
+      - uses: ariga/atlas-action/migrate/push@v1
         if: github.ref == 'refs/heads/master'
         with:
             dir: 'file://{{ .Path }}'
             {{- with .DirName }}
             dir-name: '{{ . }}'
             {{- end }}
-            {{ template "UseServices" (args .Driver "localhost") }}
-            cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
+            {{ template "UseServices" . }}

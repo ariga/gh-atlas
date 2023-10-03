@@ -51,15 +51,13 @@
 {{- end }}
 
 {{- define "UseServices" }}
-{{- $Driver := index . 0 }}
-{{- $Host := index . 1 }}
-{{- if eq $Driver "mysql" -}}
-          dev-url: 'mysql://root:pass@{{- $Host }}:3306/dev'
-{{- else if eq $Driver "postgres" -}}
-          dev-url: 'postgres://postgres:pass@{{- $Host }}:5432/dev?search_path=public&sslmode=disable'
-{{- else if eq $Driver "mariadb" -}}
-          dev-url: 'maria://root:pass@{{- $Host }}:3306/dev'
-{{- else if eq $Driver "sqlite" -}}
+{{- if eq .Driver "mysql" -}}
+          dev-url: 'mysql://root:pass@localhost:3306/dev'
+{{- else if eq .Driver "postgres" -}}
+          dev-url: 'postgres://postgres:pass@localhost:5432/dev?search_path=public&sslmode=disable'
+{{- else if eq .Driver "mariadb" -}}
+          dev-url: 'maria://root:pass@localhost:3306/dev'
+{{- else if eq .Driver "sqlite" -}}
           dev-url: 'sqlite://dev?mode=memory'
 {{- end -}}
 {{- end -}}

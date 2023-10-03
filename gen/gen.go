@@ -35,15 +35,8 @@ var (
 	files embed.FS
 
 	tmpl = template.Must(template.New("atlas-sync-action").
-		Funcs(argsFunc()).
 		ParseFS(files, "*.tmpl"))
 )
-
-func argsFunc() template.FuncMap {
-	return template.FuncMap{"args": func(els ...any) []any {
-		return els
-	}}
-}
 
 // Generate the content of the atlas ci lint yaml.
 func Generate(cfg *Config) ([]byte, error) {
