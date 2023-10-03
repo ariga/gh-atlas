@@ -56,7 +56,7 @@ jobs:
       - name: Run GitHub atlas extension
         run: |
           gh atlas init-action -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --dir-name="sync-action-integration-test" --driver="sqlite" "sqlite_dir"
-      - name: Run Gituh atlas extension with invalid dir
+      - name: Run GitHub atlas extension with invalid dir
         id: invalid_dir
         continue-on-error: true
         run: |
