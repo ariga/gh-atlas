@@ -253,6 +253,22 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
+			name:   "provide directory name",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				Driver:  "mysql",
+				DirName: "name",
+				Token:   "multiple",
+			},
+			expected: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "multiple",
+			},
+		},
+		{
 			name:   "no token flag supplied",
 			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
 			cmd: &InitActionCmd{
@@ -289,7 +305,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:   "file exists",
+			name:   "ci file exists",
 			client: createGHClient(&mockService{}),
 			prompt: "my token\n",
 			cmd: &InitActionCmd{
@@ -301,7 +317,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:   "replace existing file",
+			name:   "replace existing ci file",
 			client: createGHClient(&mockService{}),
 			prompt: "my token\n",
 			cmd: &InitActionCmd{

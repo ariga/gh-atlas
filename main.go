@@ -114,12 +114,14 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	if len(dirNames) == 0 {
 		return errors.New("no migration directories found in your organization")
 	}
-	if i.DirName != "" && !slices.Contains(dirNames, i.DirName) {
+	switch {
+	case i.DirName == "":
+		// If the dir name was not provided by the user, set it interactively.
+		if err := i.setDirName(dirNames); err != nil {
+			return err
+		}
+	case !slices.Contains(dirNames, i.DirName):
 		return fmt.Errorf("no migration directory with name %q found in your organization", i.DirName)
-	}
-	// If the dir name was not provided by the user, set it interactively.
-	if err := i.setDirName(dirNames); err != nil {
-		return err
 	}
 	if err = repo.SetSecret(ctx, secretName, i.Token); err != nil {
 		return err
