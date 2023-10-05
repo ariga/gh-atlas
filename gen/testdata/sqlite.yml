@@ -28,6 +28,8 @@ jobs:
           dir: 'file://migrations'
           dir-name: 'name'
           dev-url: 'sqlite://dev?mode=memory'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - uses: ariga/atlas-action/migrate/push@v1
         if: github.ref == 'refs/heads/master'
         with:
