@@ -184,6 +184,22 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
+			name:   "no dir path supplied, choose manual dir path",
+			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			cmd: &InitActionCmd{
+				Token:   "token",
+				DirName: "name",
+			},
+			// enter, arrow key down, enter, `dir/migrations`, enter
+			prompt: "\n\x1b[B\n`dir/migrations`\n\n",
+			expected: &InitActionCmd{
+				DirPath: "`dir/migrations`",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+		},
+		{
 			name:   "no dir name supplied use cloud dir name",
 			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
 			cmd: &InitActionCmd{

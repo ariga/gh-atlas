@@ -11,24 +11,41 @@ import (
 func (i *InitActionCmd) setParams(dirs []string) error {
 	var err error
 	if i.DirPath == "" {
-		if len(dirs) == 0 {
-			return errors.New("no migration directories found in the repository, please enter dir path manually by running:\n" +
-			`gh atlas init-action "dir/path/migrations"` )
-		}
 		prompt := promptui.Select{
-			Label: "Choose migration directory",
-			Items: dirs,
-			Stdin: i.stdin,
-		}
-		if _, i.DirPath, err = prompt.Run(); err != nil {
-			return err
-		}
-		prompt = promptui.Select{
 			Label: "Choose driver",
 			Items: []string{"mysql", "postgres", "mariadb", "sqlite"},
 			Stdin: i.stdin,
 		}
 		if _, i.Driver, err = prompt.Run(); err != nil {
+			return err
+		}
+	}
+	switch {
+	case i.DirPath == "" && len(dirs) == 0:
+		prompt := promptui.Prompt{
+			Label: "Enter the path of the migration directory in your repository",
+			Stdin: i.stdin,
+		}
+		if i.DirPath, err = prompt.Run(); err != nil {
+			return err
+		}
+	case i.DirPath == "" && len(dirs) > 0:
+		opts := append(dirs, "provide another path")
+		prompt := promptui.Select{
+			Label: "Choose migration directory",
+			Items: opts,
+			Stdin: i.stdin,
+		}
+		if _, i.DirPath, err = prompt.Run(); err != nil {
+			return err
+		}
+	}
+	if i.DirPath == "provide another path" {
+		prompt := promptui.Prompt{
+			Label: "Enter the path of the migration directory in your repository",
+			Stdin: i.stdin,
+		}
+		if i.DirPath, err = prompt.Run(); err != nil {
 			return err
 		}
 	}
