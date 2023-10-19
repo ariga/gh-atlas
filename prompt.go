@@ -19,34 +19,34 @@ func (i *InitActionCmd) setParams(dirs []string) error {
 		if _, i.Driver, err = prompt.Run(); err != nil {
 			return err
 		}
-	}
-	switch {
-	case i.DirPath == "" && len(dirs) == 0:
-		prompt := promptui.Prompt{
-			Label: "Enter the path of the migration directory in your repository",
-			Stdin: i.stdin,
+		switch {
+		case len(dirs) == 0:
+			prompt := promptui.Prompt{
+				Label: "Enter the path of the migration directory in your repository",
+				Stdin: i.stdin,
+			}
+			if i.DirPath, err = prompt.Run(); err != nil {
+				return err
+			}
+		case len(dirs) > 0:
+			opts := append(dirs, "provide another path")
+			prompt := promptui.Select{
+				Label: "Choose migration directory",
+				Items: opts,
+				Stdin: i.stdin,
+			}
+			if _, i.DirPath, err = prompt.Run(); err != nil {
+				return err
+			}
 		}
-		if i.DirPath, err = prompt.Run(); err != nil {
-			return err
-		}
-	case i.DirPath == "" && len(dirs) > 0:
-		opts := append(dirs, "provide another path")
-		prompt := promptui.Select{
-			Label: "Choose migration directory",
-			Items: opts,
-			Stdin: i.stdin,
-		}
-		if _, i.DirPath, err = prompt.Run(); err != nil {
-			return err
-		}
-	}
-	if i.DirPath == "provide another path" {
-		prompt := promptui.Prompt{
-			Label: "Enter the path of the migration directory in your repository",
-			Stdin: i.stdin,
-		}
-		if i.DirPath, err = prompt.Run(); err != nil {
-			return err
+		if i.DirPath == "provide another path" {
+			prompt := promptui.Prompt{
+				Label: "Enter the path of the migration directory in your repository",
+				Stdin: i.stdin,
+			}
+			if i.DirPath, err = prompt.Run(); err != nil {
+				return err
+			}
 		}
 	}
 	if i.Token == "" {
