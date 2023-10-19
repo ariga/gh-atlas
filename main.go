@@ -97,9 +97,6 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	if err != nil {
 		return err
 	}
-	if len(dirs) == 0 {
-		return errors.New("no migration directories found in the repository")
-	}
 	if err = i.setParams(dirs); err != nil {
 		return err
 	}

@@ -11,6 +11,10 @@ import (
 func (i *InitActionCmd) setParams(dirs []string) error {
 	var err error
 	if i.DirPath == "" {
+		if len(dirs) == 0 {
+			return errors.New("no migration directories found in the repository, please enter dir path manually by running:\n" +
+			`gh atlas init-action "dir/path/migrations"` )
+		}
 		prompt := promptui.Select{
 			Label: "Choose migration directory",
 			Items: dirs,
