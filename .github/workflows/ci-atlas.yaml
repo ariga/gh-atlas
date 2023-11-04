@@ -1,0 +1,53 @@
+name: Atlas
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/ci-atlas.yaml
+      - 'gorm/migrations/*'
+  pull_request:
+    paths:
+      - 'gorm/migrations/*'
+# Permissions to write comments on the pull request.
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  atlas:
+    services:
+      # Spin up a mysql:8 container to be used as the dev-database for analysis.
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: dev
+          MYSQL_ROOT_PASSWORD: pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -ppass"
+          --health-interval 10s
+          --health-start-period 10s
+          --health-timeout 5s
+          --health-retries 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: ariga/setup-atlas@v0
+        with:
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN_6HLKSB }}
+      - uses: ariga/atlas-action/migrate/lint@v1
+        with:
+          dir: 'file://gorm/migrations'
+          dir-name: 'gorm/migrations'
+          dev-url: 'mysql://root:pass@localhost:3306/dev'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: ariga/atlas-action/migrate/push@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+            dir: 'file://gorm/migrations'
+            dir-name: 'gorm/migrations'
+            dev-url: 'mysql://root:pass@localhost:3306/dev'
