@@ -34,7 +34,7 @@ jobs:
         env:
           GITHUB_TOKEN: {{`${{ github.token }}`}}
       - uses: ariga/atlas-action/migrate/push@v1
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/{{ .DefaultBranch }}'
         with:
             dir: 'file://{{ .Path }}'
             {{- with .DirName }}
