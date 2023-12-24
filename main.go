@@ -58,7 +58,7 @@ type InitActionCmd struct {
 	Repo       string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
 	ConfigPath string        `optional:"" help:"Path to atlas.hcl configuration file."`
 	ConfigEnv  string        `optional:"" help:"The environment to use from the Atlas configuration file."`
-	HasDevURL  bool          `hidden:"" help:"Whether the environment config has a dev_url attribute." default:"false"`
+	HasDevURL  bool          `optional:"" help:"Whether the environment config has a dev_url attribute." default:"false"`
 	DirName    string        `optional:"" help:"Name of target migration directory in Atlas Cloud."`
 	Replace    bool          `optional:"" help:"Replace existing Atlas CI workflow."`
 	stdin      io.ReadCloser `hidden:""`
