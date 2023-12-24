@@ -88,9 +88,13 @@ func (i *InitActionCmd) setParams(ctx context.Context, repo *Repository) error {
 				}
 				opts = append(opts, envNames...)
 				prompt := promptui.Select{
-					Label:    fmt.Sprintf("Use environment from %s?", configs[0]),
+					Label:    fmt.Sprintf("Use %q file as config?", configs[0]),
 					HideHelp: true,
 					Items:    opts,
+					Templates: &promptui.SelectTemplates{
+						Active:   "{{ if eq . \"no\" }}▸ no{{ else }}▸ use with env {{ . | bold }}{{ end }}",
+						Inactive: "{{ if eq . \"no\" }}  no{{ else }}  use with env {{ . | bold }}{{ end }}",
+					},
 					Stdin:    i.stdin,
 				}
 				_, env, err := prompt.Run()
@@ -112,6 +116,10 @@ func (i *InitActionCmd) setParams(ctx context.Context, repo *Repository) error {
 				Label:    "Use config file?",
 				HideHelp: true,
 				Items:    opts,
+				Templates: &promptui.SelectTemplates{
+					Active:   "{{ if eq . \"no\" }}▸ no{{ else }}▸ use {{ . | bold }}{{ end }}",
+					Inactive: "{{ if eq . \"no\" }}  no{{ else }}  use {{ . | bold }}{{ end }}",
+				},
 				Stdin:    i.stdin,
 			}
 			_, config, err := prompt.Run()
