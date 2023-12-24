@@ -15,7 +15,9 @@ permissions:
   pull-requests: write
 jobs:
   atlas:
+    {{- if .CreateDevURL }}
     {{- template "services" . }}
+    {{- end }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -30,7 +32,15 @@ jobs:
           {{- with .DirName }}
           dir-name: '{{ . }}'
           {{- end }}
+          {{- if .CreateDevURL }}
           {{ template "UseServices" . }}
+          {{- end }}
+          {{- with .ConfigPath }}
+          config: 'file://{{ . }}'
+          {{- end }}
+          {{- with .Env }}
+          env: '{{ . }}'
+          {{- end }}
         env:
           GITHUB_TOKEN: {{`${{ github.token }}`}}
       - uses: ariga/atlas-action/migrate/push@v1
@@ -40,4 +50,12 @@ jobs:
             {{- with .DirName }}
             dir-name: '{{ . }}'
             {{- end }}
+            {{- if .CreateDevURL }}
             {{ template "UseServices" . }}
+            {{- end }}
+            {{- with .ConfigPath }}
+            config: 'file://{{ . }}'
+            {{- end }}
+            {{- with .Env }}
+            env: '{{ . }}'
+            {{- end }}

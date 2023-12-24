@@ -15,16 +15,28 @@ func TestGen(t *testing.T) {
 		t.Run(f.Name(), func(t *testing.T) {
 			expected, err := os.ReadFile("testdata/" + f.Name())
 			require.NoError(t, err)
+			name := strings.TrimSuffix(f.Name(), ".yml")
 			cfg := &Config{
 				Path:          "migrations",
 				DirName:       "name",
 				DefaultBranch: "master",
 				SecretName:    "ATLAS_CLOUD_TOKEN",
-				Driver:        strings.TrimSuffix(f.Name(), ".yml"),
+				Driver:        name,
+				CreateDevURL: true,
+			}
+			if strings.Contains(name, "atlas_config") {
+				cfg.Driver =  strings.Split(name , "_")[0]
+				cfg.ConfigPath = "atlas.hcl"
+				cfg.Env = "dev"
+				cfg.CreateDevURL = false
 			}
 			actual, err := Generate(cfg)
 			require.NoError(t, err)
 			require.Equal(t, strings.TrimSpace(string(expected)), strings.TrimSpace(string(actual)))
 		})
 	}
+}
+
+func TestGenWithoutDevURL(t *testing.T) {
+
 }

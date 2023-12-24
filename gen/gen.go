@@ -17,7 +17,9 @@ type (
 		SecretName    string
 		DefaultBranch string
 		Driver        string
-		Services      string
+		ConfigPath    string
+		Env 		  string
+		CreateDevURL  bool
 	}
 )
 
