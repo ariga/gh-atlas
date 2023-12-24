@@ -36,7 +36,3 @@ func TestGen(t *testing.T) {
 		})
 	}
 }
-
-func TestGenWithoutDevURL(t *testing.T) {
-
-}
