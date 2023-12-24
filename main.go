@@ -52,14 +52,17 @@ var cli struct {
 
 // InitActionCmd is the command for initializing a new Atlas CI workflow.
 type InitActionCmd struct {
-	DirPath  string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
-	Driver   string        `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
-	Token    string        `short:"t" help:"Atlas authentication token."`
-	Repo     string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
-	DirName  string        `optional:"" help:"Name of target migration directory in Atlas Cloud."`
-	Replace  bool          `optional:"" help:"Replace existing Atlas CI workflow."`
-	stdin    io.ReadCloser `hidden:""`
-	cloudURL string        `hidden:""`
+	DirPath    string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
+	Driver     string        `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
+	Token      string        `short:"t" help:"Atlas authentication token."`
+	Repo       string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
+	ConfigPath string        `optional:"" help:"Path to atlas.hcl configuration file."`
+	ConfigEnv  string        `optional:"" help:"The environment to use from the Atlas configuration file."`
+	HasDevURL  bool          `hidden:"" help:"Whether the environment config has a dev_url attribute." default:"false"`
+	DirName    string        `optional:"" help:"Name of target migration directory in Atlas Cloud."`
+	Replace    bool          `optional:"" help:"Replace existing Atlas CI workflow."`
+	stdin      io.ReadCloser `hidden:""`
+	cloudURL   string        `hidden:""`
 }
 
 func (i *InitActionCmd) Help() string {
@@ -93,11 +96,7 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		return err
 	}
 	repo := NewRepository(client, current, repoData.GetDefaultBranch())
-	dirs, err := repo.MigrationDirectories(ctx)
-	if err != nil {
-		return err
-	}
-	if err = i.setParams(dirs); err != nil {
+	if err = i.setParams(ctx, repo); err != nil {
 		return err
 	}
 	cloud := cloudapi.New(i.cloudURL, i.Token)
@@ -129,6 +128,9 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		Driver:        i.Driver,
 		SecretName:    secretName,
 		DefaultBranch: repo.defaultBranch,
+		ConfigPath:    i.ConfigPath,
+		Env:           i.ConfigEnv,
+		CreateDevURL:  !i.HasDevURL,
 	}
 	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg, i.Replace); err != nil {
 		return err

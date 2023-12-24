@@ -18,7 +18,7 @@ type (
 		DefaultBranch string
 		Driver        string
 		ConfigPath    string
-		Env 		  string
+		Env           string
 		CreateDevURL  bool
 	}
 )
