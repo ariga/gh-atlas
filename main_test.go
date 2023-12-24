@@ -352,7 +352,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name: "repo has atlas.hcl file",
+			name: "repo has atlas.hcl file, dont use it",
 			client: createGHClient(
 				&mockService{
 					getContentError: &github.ErrorResponse{Message: "Not Found"},
@@ -368,7 +368,36 @@ func TestRunInitActionCmd(t *testing.T) {
 				Driver:  "mysql",
 				Token:   "token",
 			},
-			prompt: "\n\n",
+			prompt: "\n",
+			expected: &InitActionCmd{
+				DirPath:    "migrations",
+				DirName:    "name",
+				Driver:     "mysql",
+				Token:      "token",
+				ConfigPath: "",
+				ConfigEnv:  "",
+				HasDevURL:  false,
+			},
+		},
+		{
+			name: "repo has atlas.hcl file, use it",
+			client: createGHClient(
+				&mockService{
+					getContentError: &github.ErrorResponse{Message: "Not Found"},
+					// language=HCL
+					hclFileContent: `env "local" {
+                                          dev = "postgres://localhost:5432/dev"
+                                    }`},
+				&mockService{hasHclFile: true}),
+
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+			// go down and press enter, then press enter again
+			prompt: "\x1b[B\n\n",
 			expected: &InitActionCmd{
 				DirPath:    "migrations",
 				DirName:    "name",
@@ -378,28 +407,6 @@ func TestRunInitActionCmd(t *testing.T) {
 				ConfigEnv:  "local",
 				HasDevURL:  true,
 			},
-		},
-		{
-			name: "repo has atlas.hcl file without env block",
-			client: createGHClient(
-				&mockService{
-					getContentError: &github.ErrorResponse{Message: "Not Found"},
-					// language=HCL
-					hclFileContent: `variable "url" {
-                                       type    = string
-                                       default = getenv("DB_URL")
-                                     }`},
-				&mockService{hasHclFile: true}),
-
-			cmd: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
-			},
-			// press double enter
-			prompt: "\n\n",
-			wantErr: true,
 		},
 		{
 			name: "repo has atlas.hcl without dev-url in env block",
@@ -424,8 +431,8 @@ func TestRunInitActionCmd(t *testing.T) {
 				DirName:    "name",
 				Driver:     "mysql",
 				Token:      "token",
-				ConfigPath: "atlas.hcl",
-				ConfigEnv:  "local",
+				ConfigPath: "",
+				ConfigEnv:  "",
 				HasDevURL:  false,
 			},
 		},
