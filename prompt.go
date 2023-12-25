@@ -81,21 +81,19 @@ func (i *InitActionCmd) setParams(ctx context.Context, repo *Repository) error {
 				}
 			}
 			if len(envs) > 0 {
-				opts := []string{"no"}
 				envNames := make([]string, 0, len(envs))
 				for k := range envs {
 					envNames = append(envNames, k)
 				}
-				opts = append(opts, envNames...)
 				prompt := promptui.Select{
 					Label:    fmt.Sprintf("Use %q file as config?", configs[0]),
 					HideHelp: true,
-					Items:    opts,
+					Items:    append(envNames, "no"),
 					Templates: &promptui.SelectTemplates{
-						Active:   "{{ if eq . \"no\" }}▸ no{{ else }}▸ use with env {{ . | bold }}{{ end }}",
-						Inactive: "{{ if eq . \"no\" }}  no{{ else }}  use with env {{ . | bold }}{{ end }}",
+						Active:   "{{ if eq . \"no\" }}▸ No{{ else }}▸ Use with env {{ . | bold }}{{ end }}",
+						Inactive: "{{ if eq . \"no\" }}  No{{ else }}  Use with env {{ . | bold }}{{ end }}",
 					},
-					Stdin:    i.stdin,
+					Stdin: i.stdin,
 				}
 				_, env, err := prompt.Run()
 				if err != nil {
@@ -110,17 +108,15 @@ func (i *InitActionCmd) setParams(ctx context.Context, repo *Repository) error {
 			}
 
 		case len(configs) > 1:
-			opts := []string{"no"}
-			opts = append(opts, configs...)
 			prompt := promptui.Select{
 				Label:    "Use config file?",
 				HideHelp: true,
-				Items:    opts,
+				Items:    append(configs, "no"),
 				Templates: &promptui.SelectTemplates{
-					Active:   "{{ if eq . \"no\" }}▸ no{{ else }}▸ use {{ . | bold }}{{ end }}",
-					Inactive: "{{ if eq . \"no\" }}  no{{ else }}  use {{ . | bold }}{{ end }}",
+					Active:   "{{ if eq . \"no\" }}▸ No{{ else }}▸ Use {{ . | bold }}{{ end }}",
+					Inactive: "{{ if eq . \"no\" }}  No{{ else }}  Use {{ . | bold }}{{ end }}",
 				},
-				Stdin:    i.stdin,
+				Stdin: i.stdin,
 			}
 			_, config, err := prompt.Run()
 			if err != nil {

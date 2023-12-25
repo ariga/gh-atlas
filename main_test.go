@@ -368,7 +368,8 @@ func TestRunInitActionCmd(t *testing.T) {
 				Driver:  "mysql",
 				Token:   "token",
 			},
-			prompt: "\n",
+			// arrow key down and then enter
+			prompt: "\x1b[B\n\n",
 			expected: &InitActionCmd{
 				DirPath:    "migrations",
 				DirName:    "name",
@@ -396,8 +397,7 @@ func TestRunInitActionCmd(t *testing.T) {
 				Driver:  "mysql",
 				Token:   "token",
 			},
-			// go down and press enter, then press enter again
-			prompt: "\x1b[B\n\n",
+			prompt: "\n\n",
 			expected: &InitActionCmd{
 				DirPath:    "migrations",
 				DirName:    "name",
@@ -425,7 +425,8 @@ func TestRunInitActionCmd(t *testing.T) {
 				Driver:  "mysql",
 				Token:   "token",
 			},
-			prompt: "\n\n",
+			// arrow key down and then enter
+			prompt: "\x1b[B\n\n",
 			expected: &InitActionCmd{
 				DirPath:    "migrations",
 				DirName:    "name",
