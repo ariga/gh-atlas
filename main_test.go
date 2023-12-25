@@ -18,6 +18,8 @@ import (
 // mockService is a mock implementation of necessary GitHub API methods.
 type mockService struct {
 	getContentError error
+	hasHclFile      bool
+	hclFileContent  string
 }
 
 func (m *mockService) GetRef(context.Context, string, string, string) (*github.Reference, *github.Response, error) {
@@ -34,7 +36,10 @@ func (m *mockService) CreateRef(context.Context, string, string, *github.Referen
 func (m *mockService) Get(context.Context, string, string) (*github.Repository, *github.Response, error) {
 	return nil, nil, nil
 }
-func (m *mockService) GetContents(context.Context, string, string, string, *github.RepositoryContentGetOptions) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error) {
+func (m *mockService) GetContents(ctx context.Context, owner string, repo string, path string, opts *github.RepositoryContentGetOptions) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error) {
+	if path == "atlas.hcl" {
+		return &github.RepositoryContent{Content: &m.hclFileContent}, nil, nil, nil
+	}
 	sha := "12345"
 	return &github.RepositoryContent{SHA: &sha}, nil, nil, m.getContentError
 }
@@ -72,6 +77,12 @@ func (m *mockService) GetTree(context.Context, string, string, string, bool) (*g
 			},
 		},
 	}
+	if m.hasHclFile {
+		tree.Entries = append(tree.Entries, &github.TreeEntry{
+			Path: github.String("atlas.hcl"),
+			Type: github.String("blob"),
+		})
+	}
 	return tree, nil, nil
 }
 
@@ -94,9 +105,9 @@ func (b *stdinBuffer) Read(dst []byte) (int, error) {
 	return n, nil
 }
 
-func createGHClient(repoSvc repositoriesService) *githubClient {
+func createGHClient(repoSvc repositoriesService, gitSvc gitService) *githubClient {
 	return &githubClient{
-		Git:          &mockService{},
+		Git:          gitSvc,
 		Repositories: repoSvc,
 		Actions:      &mockService{},
 		PullRequests: &mockService{},
@@ -144,6 +155,7 @@ func TestRunInitActionCmd(t *testing.T) {
 		require.NoError(t, err)
 	}))
 	require.NoError(t, err)
+	defaultClient := createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}, &mockService{})
 	var tests = []struct {
 		name     string
 		client   *githubClient
@@ -153,8 +165,7 @@ func TestRunInitActionCmd(t *testing.T) {
 		wantErr  bool           // whether the command should return an error
 	}{
 		{
-			name:   "all arg and flags supplied",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "all arg and flags supplied",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				DirName: "name",
@@ -169,8 +180,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name:   "no dir path and driver supplied",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "no dir path and driver supplied",
 			cmd: &InitActionCmd{
 				Token:   "token",
 				DirName: "name",
@@ -184,8 +194,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name:   "no dir path supplied, choose manual dir path",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "no dir path supplied, choose manual dir path",
 			cmd: &InitActionCmd{
 				Token:   "token",
 				DirName: "name",
@@ -200,8 +209,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name:   "no dir name supplied use cloud dir name",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "no dir name supplied use cloud dir name",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
@@ -216,8 +224,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name:   "no dirs in organization",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "no dirs in organization",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
@@ -226,8 +233,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:   "dir name provided but doesn't exist in cloud",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "dir name provided but doesn't exist in cloud",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
@@ -237,8 +243,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:   "single dir in organization",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "single dir in organization",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
@@ -252,8 +257,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name:   "multiple dirs in organization",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "multiple dirs in organization",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
@@ -269,8 +273,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name:   "provide directory name",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "provide directory name",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
@@ -285,8 +288,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name:   "no token flag supplied",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "no token flag supplied",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				DirName: "name",
@@ -301,8 +303,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			},
 		},
 		{
-			name:   "empty token prompt",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "empty token prompt",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
@@ -311,8 +312,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:   "invalid token prompt",
-			client: createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}),
+			name: "invalid token prompt",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				Driver:  "mysql",
@@ -322,7 +322,7 @@ func TestRunInitActionCmd(t *testing.T) {
 		},
 		{
 			name:   "ci file exists",
-			client: createGHClient(&mockService{}),
+			client: createGHClient(&mockService{}, &mockService{}),
 			prompt: "my token\n",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
@@ -334,7 +334,7 @@ func TestRunInitActionCmd(t *testing.T) {
 		},
 		{
 			name:   "replace existing ci file",
-			client: createGHClient(&mockService{}),
+			client: createGHClient(&mockService{}, &mockService{}),
 			prompt: "my token\n",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
@@ -349,6 +349,92 @@ func TestRunInitActionCmd(t *testing.T) {
 				Driver:  "mysql",
 				Token:   "token",
 				Replace: true,
+			},
+		},
+		{
+			name: "repo has atlas.hcl file, dont use it",
+			client: createGHClient(
+				&mockService{
+					getContentError: &github.ErrorResponse{Message: "Not Found"},
+					// language=HCL
+					hclFileContent: `env "local" {
+                                          dev = "postgres://localhost:5432/dev"
+                                    }`},
+				&mockService{hasHclFile: true}),
+
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+			// arrow key down and then enter
+			prompt: "\x1b[B\n\n",
+			expected: &InitActionCmd{
+				DirPath:    "migrations",
+				DirName:    "name",
+				Driver:     "mysql",
+				Token:      "token",
+				ConfigPath: "",
+				ConfigEnv:  "",
+				HasDevURL:  false,
+			},
+		},
+		{
+			name: "repo has atlas.hcl file, use it",
+			client: createGHClient(
+				&mockService{
+					getContentError: &github.ErrorResponse{Message: "Not Found"},
+					// language=HCL
+					hclFileContent: `env "local" {
+                                          dev = "postgres://localhost:5432/dev"
+                                    }`},
+				&mockService{hasHclFile: true}),
+
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+			prompt: "\n\n",
+			expected: &InitActionCmd{
+				DirPath:    "migrations",
+				DirName:    "name",
+				Driver:     "mysql",
+				Token:      "token",
+				ConfigPath: "atlas.hcl",
+				ConfigEnv:  "local",
+				HasDevURL:  true,
+			},
+		},
+		{
+			name: "repo has atlas.hcl without dev-url in env block",
+			client: createGHClient(
+				&mockService{
+					getContentError: &github.ErrorResponse{Message: "Not Found"},
+					// language=HCL
+					hclFileContent: `env "local" {
+                                          url = "postgres://localhost:5432/dev"
+                                    }`},
+				&mockService{hasHclFile: true}),
+
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+			// arrow key down and then enter
+			prompt: "\x1b[B\n\n",
+			expected: &InitActionCmd{
+				DirPath:    "migrations",
+				DirName:    "name",
+				Driver:     "mysql",
+				Token:      "token",
+				ConfigPath: "",
+				ConfigEnv:  "",
+				HasDevURL:  false,
 			},
 		},
 	}
@@ -364,6 +450,9 @@ func TestRunInitActionCmd(t *testing.T) {
 				tt.cmd.stdin = &stdinBuffer{r}
 				tt.cmd.cloudURL = srv.URL
 
+				if tt.client == nil {
+					tt.client = defaultClient
+				}
 				err = tt.cmd.Run(context.Background(), tt.client, repo)
 				if tt.wantErr {
 					require.Error(t, err)
@@ -375,6 +464,9 @@ func TestRunInitActionCmd(t *testing.T) {
 				require.Equal(t, tt.expected.DirPath, tt.cmd.DirPath)
 				require.Equal(t, tt.expected.DirName, tt.cmd.DirName)
 				require.Equal(t, tt.expected.Replace, tt.cmd.Replace)
+				require.Equal(t, tt.expected.ConfigPath, tt.cmd.ConfigPath)
+				require.Equal(t, tt.expected.ConfigEnv, tt.cmd.ConfigEnv)
+				require.Equal(t, tt.expected.HasDevURL, tt.cmd.HasDevURL)
 			})
 		}
 	}

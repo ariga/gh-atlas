@@ -177,3 +177,27 @@ func (r *Repository) MigrationDirectories(ctx context.Context) ([]string, error)
 	}
 	return paths, nil
 }
+
+// ConfigFiles returns a list of paths to atlas.hcl files in the repository.
+func (r *Repository) ConfigFiles(ctx context.Context) ([]string, error) {
+	t, _, err := r.client.Git.GetTree(ctx, r.owner, r.name, r.defaultBranch, true)
+	if err != nil {
+		return nil, err
+	}
+	var paths []string
+	for _, e := range t.Entries {
+		if e.GetType() == "blob" && strings.HasSuffix(e.GetPath(), "atlas.hcl") {
+			paths = append(paths, e.GetPath())
+		}
+	}
+	return paths, nil
+}
+
+// ReadContent of the file at the given path.
+func (r *Repository) ReadContent(ctx context.Context, path string) (string, error) {
+	fileContents, _, _, err := r.client.Repositories.GetContents(ctx, r.owner, r.name, path, nil)
+	if err != nil {
+		return "", err
+	}
+	return fileContents.GetContent()
+}
