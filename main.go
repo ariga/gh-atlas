@@ -53,7 +53,7 @@ var cli struct {
 // InitActionCmd is the command for initializing a new Atlas CI workflow.
 type InitActionCmd struct {
 	DirPath    string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
-	Driver     string        `enum:"mysql,postgres,mariadb,sqlite" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite)."`
+	Driver     string        `enum:"mysql,postgres,mariadb,sqlite,mssql,clickhouse" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite,mssql,clickhouse)."`
 	Token      string        `short:"t" help:"Atlas authentication token."`
 	Repo       string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
 	ConfigPath string        `optional:"" help:"Path to atlas.hcl configuration file."`

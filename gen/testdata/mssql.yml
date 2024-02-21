@@ -1,0 +1,53 @@
+name: Atlas
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/ci-atlas.yaml
+      - 'migrations/*'
+  pull_request:
+    paths:
+      - 'migrations/*'
+# Permissions to write comments on the pull request.
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  atlas:
+    services:
+      # Spin up a mcr.microsoft.com/mssql/server:2022-latest container to be used as the dev-database for analysis.
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: P@ssw0rd0995
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -U sa -P P@ssw0rd0995 -Q \"SELECT 1\""
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: ariga/setup-atlas@v0
+        with:
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
+      - uses: ariga/atlas-action/migrate/lint@v1
+        with:
+          dir: 'file://migrations'
+          dir-name: 'name'
+          dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433/test'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: ariga/atlas-action/migrate/push@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+            dir: 'file://migrations'
+            dir-name: 'name'
+            dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433/test'

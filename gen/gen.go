@@ -5,6 +5,7 @@ import (
 	"embed"
 	_ "embed"
 	"fmt"
+	"slices"
 	"text/template"
 )
 
@@ -23,13 +24,13 @@ type (
 	}
 )
 
+var Drivers = []string{"mysql", "postgres", "mariadb", "sqlite", "mssql", "clickhouse"}
+
 func validateDriver(s string) error {
-	switch s {
-	case "postgres", "mysql", "mariadb", "sqlite":
-		return nil
-	default:
+	if !slices.Contains(Drivers, s) {
 		return fmt.Errorf("unknown driver %q", s)
 	}
+	return nil
 }
 
 var (

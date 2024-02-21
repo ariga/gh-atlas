@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"ariga.io/gh-atlas/gen"
 	"github.com/1lann/promptui"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -25,7 +26,7 @@ func (i *InitActionCmd) setParams(ctx context.Context, repo *Repository) error {
 		prompt := promptui.Select{
 			Label:    "Choose driver",
 			HideHelp: true,
-			Items:    []string{"mysql", "postgres", "mariadb", "sqlite"},
+			Items:    gen.Drivers,
 			Stdin:    i.stdin,
 		}
 		if _, i.Driver, err = prompt.Run(); err != nil {

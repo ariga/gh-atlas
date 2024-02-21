@@ -1,0 +1,54 @@
+name: Atlas
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/ci-atlas.yaml
+      - 'migrations/*'
+  pull_request:
+    paths:
+      - 'migrations/*'
+# Permissions to write comments on the pull request.
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  atlas:
+    services:
+      # Spin up a clickhouse:23.10 container to be used as the dev-database for analysis.
+      clickhouse:
+        image: clickhouse/clickhouse-server:23.10
+        env:
+          CLICKHOUSE_DB: test
+          CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+          CLICKHOUSE_PASSWORD: pass
+          CLICKHOUSE_USER: root
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "clickhouse-client --host localhost --query 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: ariga/setup-atlas@v0
+        with:
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
+      - uses: ariga/atlas-action/migrate/lint@v1
+        with:
+          dir: 'file://migrations'
+          dir-name: 'name'
+          dev-url: 'clickhouse://root:pass@localhost:9000/test'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: ariga/atlas-action/migrate/push@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+            dir: 'file://migrations'
+            dir-name: 'name'
+            dev-url: 'clickhouse://root:pass@localhost:9000/test'
