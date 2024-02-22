@@ -47,6 +47,39 @@
           --health-start-period 10s
           --health-timeout 5s
           --health-retries 10
+    {{- else if eq .Driver "clickhouse" }}
+    services:
+      # Spin up a clickhouse:23.10 container to be used as the dev-database for analysis.
+      clickhouse:
+        image: clickhouse/clickhouse-server:23.10
+        env:
+          CLICKHOUSE_DB: test
+          CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+          CLICKHOUSE_PASSWORD: pass
+          CLICKHOUSE_USER: root
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "clickhouse-client --host localhost --query 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    {{- else if eq .Driver "mssql" }}
+    services:
+      # Spin up a mcr.microsoft.com/mssql/server:2022-latest container to be used as the dev-database for analysis.
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: P@ssw0rd0995
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -U sa -P P@ssw0rd0995 -Q \"SELECT 1\""
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 {{- end }}
 {{- end }}
 
@@ -59,5 +92,9 @@
           dev-url: 'maria://root:pass@localhost:3306/dev'
 {{- else if eq .Driver "sqlite" -}}
           dev-url: 'sqlite://dev?mode=memory'
+{{- else if eq .Driver "clickhouse" -}}
+          dev-url: 'clickhouse://root:pass@localhost:9000/test'
+{{- else if eq .Driver "mssql" -}}
+          dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433/test'
 {{- end -}}
 {{- end -}}
