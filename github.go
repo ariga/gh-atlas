@@ -193,7 +193,7 @@ func (r *Repository) ConfigFiles(ctx context.Context) ([]string, error) {
 	return paths, nil
 }
 
-// ReadContent of the file at the given path.
+// Implementation of the ContentReader interface.
 func (r *Repository) ReadContent(ctx context.Context, path string) (string, error) {
 	fileContents, _, _, err := r.client.Repositories.GetContents(ctx, r.owner, r.name, path, nil)
 	if err != nil {

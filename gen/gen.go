@@ -24,7 +24,7 @@ type (
 	}
 )
 
-var Drivers = []string{"mysql", "postgres", "mariadb", "sqlite", "mssql", "clickhouse"}
+var Drivers = []string{"mysql", "postgres", "postgis", "mariadb", "sqlite", "mssql", "clickhouse"}
 
 func validateDriver(s string) error {
 	if !slices.Contains(Drivers, s) {

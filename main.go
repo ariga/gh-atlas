@@ -53,7 +53,7 @@ var cli struct {
 // InitActionCmd is the command for initializing a new Atlas CI workflow.
 type InitActionCmd struct {
 	DirPath    string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
-	Driver     string        `enum:"mysql,postgres,mariadb,sqlite,mssql,clickhouse" default:"mysql" help:"Driver of the migration directory (mysql,postgres,mariadb,sqlite,mssql,clickhouse)."`
+	Driver     string        `enum:"mysql,postgres,postgis,mariadb,sqlite,mssql,clickhouse" default:"mysql" help:"Driver of the migration directory (mysql,postgres,postgis,mariadb,sqlite,mssql,clickhouse)."`
 	Token      string        `short:"t" help:"Atlas authentication token."`
 	Repo       string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
 	ConfigPath string        `optional:"" help:"Path to atlas.hcl configuration file."`
@@ -96,7 +96,15 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		return err
 	}
 	repo := NewRepository(client, current, repoData.GetDefaultBranch())
-	if err = i.setParams(ctx, repo); err != nil {
+	dirs, err := repo.MigrationDirectories(ctx)
+	if err != nil {
+		return err
+	}
+	configs, err := repo.ConfigFiles(ctx)
+	if err != nil {
+		return err
+	}
+	if err = i.setParams(ctx, dirs, configs, repo); err != nil {
 		return err
 	}
 	cloud := cloudapi.New(i.cloudURL, i.Token)

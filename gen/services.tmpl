@@ -88,6 +88,8 @@
           dev-url: 'mysql://root:pass@localhost:3306/dev'
 {{- else if eq .Driver "postgres" -}}
           dev-url: 'postgres://postgres:pass@localhost:5432/dev?search_path=public&sslmode=disable'
+{{- else if eq .Driver "postgis" -}}
+          dev-url: 'docker://postgis/latest/dev'
 {{- else if eq .Driver "mariadb" -}}
           dev-url: 'maria://root:pass@localhost:3306/dev'
 {{- else if eq .Driver "sqlite" -}}

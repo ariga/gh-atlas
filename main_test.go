@@ -441,6 +441,7 @@ func TestRunInitActionCmd(t *testing.T) {
 	{
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
+				// set up the terminal interaction
 				r, w, err := os.Pipe()
 				require.NoError(t, err)
 				_, err = w.WriteString(tt.prompt)
@@ -459,15 +460,19 @@ func TestRunInitActionCmd(t *testing.T) {
 					return
 				}
 				require.NoError(t, err)
-				require.Equal(t, tt.expected.Token, tt.cmd.Token)
-				require.Equal(t, tt.expected.Driver, tt.cmd.Driver)
-				require.Equal(t, tt.expected.DirPath, tt.cmd.DirPath)
-				require.Equal(t, tt.expected.DirName, tt.cmd.DirName)
-				require.Equal(t, tt.expected.Replace, tt.cmd.Replace)
-				require.Equal(t, tt.expected.ConfigPath, tt.cmd.ConfigPath)
-				require.Equal(t, tt.expected.ConfigEnv, tt.cmd.ConfigEnv)
-				require.Equal(t, tt.expected.HasDevURL, tt.cmd.HasDevURL)
+				requireCommandsEqual(t, tt.expected, tt.cmd)
 			})
 		}
 	}
+}
+
+func requireCommandsEqual(t *testing.T, a, b *InitActionCmd)  {
+	require.Equal(t, a.DirPath, b.DirPath)
+	require.Equal(t, a.DirName, b.DirName)
+	require.Equal(t, a.Driver, b.Driver)
+	require.Equal(t, a.Token, b.Token)
+	require.Equal(t, a.ConfigPath, b.ConfigPath)
+	require.Equal(t, a.ConfigEnv, b.ConfigEnv)
+	require.Equal(t, a.HasDevURL, b.HasDevURL)
+	require.Equal(t, a.Replace, b.Replace)
 }
