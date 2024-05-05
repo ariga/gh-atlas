@@ -96,7 +96,15 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		return err
 	}
 	repo := NewRepository(client, current, repoData.GetDefaultBranch())
-	if err = i.setParams(ctx, repo); err != nil {
+	dirs, err := repo.MigrationDirectories(ctx)
+	if err != nil {
+		return err
+	}
+	configs, err := repo.ConfigFiles(ctx)
+	if err != nil {
+		return err
+	}
+	if err = i.setParams(ctx, dirs, configs, repo); err != nil {
 		return err
 	}
 	cloud := cloudapi.New(i.cloudURL, i.Token)
