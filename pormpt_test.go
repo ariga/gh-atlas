@@ -79,12 +79,13 @@ func TestSetConfigPath(t *testing.T) {
 		{
 			name: " 2 config files, multiple envs, select first file and second env",
 			cr: &mockContentReader{
-				content: `env "local" {
-                             dev = "postgres://localhost:5432/dev"
-						}
-						env "prod" {
-                             dev = "postgres://localhost:5432/dev"
-						}`,
+				content: `
+env "local" {
+  	dev = "postgres://localhost:5432/dev"
+}
+env "prod" {
+  	dev = "postgres://localhost:5432/dev"
+}`,
 			},
 			configs: []string{"atlas.hcl", "atlas2.hcl"},
 			// enter, arrow key down, enter
