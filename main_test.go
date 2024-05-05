@@ -167,60 +167,68 @@ func TestRunInitActionCmd(t *testing.T) {
 		{
 			name: "all arg and flags supplied",
 			cmd: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
 			},
 			expected: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
 			},
 		},
 		{
 			name: "no dir path and driver supplied",
 			cmd: &InitActionCmd{
-				Token:   "token",
-				DirName: "name",
+				Token:       "token",
+				DirName:     "name",
+				SchemaScope: true,
 			},
 			prompt: "\n\n",
 			expected: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
 			},
 		},
 		{
 			name: "no dir path supplied, choose manual dir path",
 			cmd: &InitActionCmd{
-				Token:   "token",
-				DirName: "name",
+				Token:       "token",
+				DirName:     "name",
+				SchemaScope: true,
 			},
 			// enter, arrow key down, enter, `dir/migrations`, enter
 			prompt: "\n\x1b[B\n`dir/migrations`\n\n",
 			expected: &InitActionCmd{
-				DirPath: "`dir/migrations`",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				DirPath:     "`dir/migrations`",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
 			},
 		},
 		{
 			name: "no dir name supplied use cloud dir name",
 			cmd: &InitActionCmd{
-				DirPath: "migrations",
-				Driver:  "mysql",
-				Token:   "token",
+				DirPath:     "migrations",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
 			},
 			prompt: "\n\n",
 			expected: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
 			},
 		},
 		{
@@ -245,61 +253,52 @@ func TestRunInitActionCmd(t *testing.T) {
 		{
 			name: "single dir in organization",
 			cmd: &InitActionCmd{
-				DirPath: "migrations",
-				Driver:  "mysql",
-				Token:   "token",
+				DirPath:     "migrations",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
 			},
 			expected: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
 			},
 		},
 		{
 			name: "multiple dirs in organization",
 			cmd: &InitActionCmd{
-				DirPath: "migrations",
-				Driver:  "mysql",
-				Token:   "multiple",
+				DirPath:     "migrations",
+				Driver:      "mysql",
+				Token:       "multiple",
+				SchemaScope: true,
 			},
 			// use arrow key down and then enter
 			prompt: "\x1b[B\n\n",
 			expected: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name2",
-				Driver:  "mysql",
-				Token:   "multiple",
-			},
-		},
-		{
-			name: "provide directory name",
-			cmd: &InitActionCmd{
-				DirPath: "migrations",
-				Driver:  "mysql",
-				DirName: "name",
-				Token:   "multiple",
-			},
-			expected: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "multiple",
+				DirPath:     "migrations",
+				DirName:     "name2",
+				Driver:      "mysql",
+				Token:       "multiple",
+				SchemaScope: true,
 			},
 		},
 		{
 			name: "no token flag supplied",
 			cmd: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				SchemaScope: true,
 			},
 			prompt: "token\n",
 			expected: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
 			},
 		},
 		{
@@ -337,18 +336,20 @@ func TestRunInitActionCmd(t *testing.T) {
 			client: createGHClient(&mockService{}, &mockService{}),
 			prompt: "my token\n",
 			cmd: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
-				Replace: true,
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				Replace:     true,
+				SchemaScope: true,
 			},
 			expected: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
-				Replace: true,
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				Replace:     true,
+				SchemaScope: true,
 			},
 		},
 		{
@@ -363,21 +364,23 @@ func TestRunInitActionCmd(t *testing.T) {
 				&mockService{hasHclFile: true}),
 
 			cmd: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
 			},
 			// arrow key down and then enter
 			prompt: "\x1b[B\n\n",
 			expected: &InitActionCmd{
-				DirPath:    "migrations",
-				DirName:    "name",
-				Driver:     "mysql",
-				Token:      "token",
-				ConfigPath: "",
-				ConfigEnv:  "",
-				HasDevURL:  false,
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				ConfigPath:  "",
+				ConfigEnv:   "",
+				HasDevURL:   false,
+				SchemaScope: true,
 			},
 		},
 		{
@@ -392,20 +395,22 @@ func TestRunInitActionCmd(t *testing.T) {
 				&mockService{hasHclFile: true}),
 
 			cmd: &InitActionCmd{
-				DirPath: "migrations",
-				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
 			},
 			prompt: "\n\n",
 			expected: &InitActionCmd{
-				DirPath:    "migrations",
-				DirName:    "name",
-				Driver:     "mysql",
-				Token:      "token",
-				ConfigPath: "atlas.hcl",
-				ConfigEnv:  "local",
-				HasDevURL:  true,
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				ConfigPath:  "atlas.hcl",
+				ConfigEnv:   "local",
+				HasDevURL:   true,
+				SchemaScope: true,
 			},
 		},
 		{
@@ -420,21 +425,58 @@ func TestRunInitActionCmd(t *testing.T) {
 				&mockService{hasHclFile: true}),
 
 			cmd: &InitActionCmd{
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
+			},
+			// arrow key down and then enter
+			prompt: "\x1b[B\n\n",
+			expected: &InitActionCmd{
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				ConfigPath:  "",
+				ConfigEnv:   "",
+				HasDevURL:   false,
+				SchemaScope: true,
+			},
+		},
+		{
+			name: "select single schema scope",
+			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				DirName: "name",
 				Driver:  "mysql",
 				Token:   "token",
 			},
-			// arrow key down and then enter
+			prompt: "\n",
+			expected: &InitActionCmd{
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: true,
+			},
+		},
+		{
+			name: "select multiple schemas scope",
+			cmd: &InitActionCmd{
+				DirPath: "migrations",
+				DirName: "name",
+				Driver:  "mysql",
+				Token:   "token",
+			},
+			// arrow key down, enter
 			prompt: "\x1b[B\n\n",
 			expected: &InitActionCmd{
-				DirPath:    "migrations",
-				DirName:    "name",
-				Driver:     "mysql",
-				Token:      "token",
-				ConfigPath: "",
-				ConfigEnv:  "",
-				HasDevURL:  false,
+				DirPath:     "migrations",
+				DirName:     "name",
+				Driver:      "mysql",
+				Token:       "token",
+				SchemaScope: false,
 			},
 		},
 	}
@@ -466,7 +508,7 @@ func TestRunInitActionCmd(t *testing.T) {
 	}
 }
 
-func requireCommandsEqual(t *testing.T, a, b *InitActionCmd)  {
+func requireCommandsEqual(t *testing.T, a, b *InitActionCmd) {
 	require.Equal(t, a.DirPath, b.DirPath)
 	require.Equal(t, a.DirName, b.DirName)
 	require.Equal(t, a.Driver, b.Driver)
@@ -475,4 +517,5 @@ func requireCommandsEqual(t *testing.T, a, b *InitActionCmd)  {
 	require.Equal(t, a.ConfigEnv, b.ConfigEnv)
 	require.Equal(t, a.HasDevURL, b.HasDevURL)
 	require.Equal(t, a.Replace, b.Replace)
+	require.Equal(t, a.SchemaScope, b.SchemaScope)
 }

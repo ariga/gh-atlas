@@ -43,7 +43,7 @@ jobs:
         with:
           dir: 'file://migrations'
           dir-name: 'name'
-          dev-url: 'clickhouse://root:pass@localhost:9000/test'
+          dev-url: 'clickhouse://root:pass@localhost:9000'
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - uses: ariga/atlas-action/migrate/push@v1
@@ -51,4 +51,4 @@ jobs:
         with:
             dir: 'file://migrations'
             dir-name: 'name'
-            dev-url: 'clickhouse://root:pass@localhost:9000/test'
+            dev-url: 'clickhouse://root:pass@localhost:9000'

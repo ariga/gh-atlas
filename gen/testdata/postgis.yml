@@ -27,7 +27,7 @@ jobs:
         with:
           dir: 'file://migrations'
           dir-name: 'name'
-          dev-url: 'docker://postgis/latest/dev'
+          dev-url: 'docker://postgis/latest'
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - uses: ariga/atlas-action/migrate/push@v1
@@ -35,4 +35,4 @@ jobs:
         with:
             dir: 'file://migrations'
             dir-name: 'name'
-            dev-url: 'docker://postgis/latest/dev'
+            dev-url: 'docker://postgis/latest'

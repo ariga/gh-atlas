@@ -52,17 +52,18 @@ var cli struct {
 
 // InitActionCmd is the command for initializing a new Atlas CI workflow.
 type InitActionCmd struct {
-	DirPath    string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
-	Driver     string        `enum:"mysql,postgres,postgis,mariadb,sqlite,mssql,clickhouse" default:"mysql" help:"Driver of the migration directory (mysql,postgres,postgis,mariadb,sqlite,mssql,clickhouse)."`
-	Token      string        `short:"t" help:"Atlas authentication token."`
-	Repo       string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
-	ConfigPath string        `optional:"" help:"Path to atlas.hcl configuration file."`
-	ConfigEnv  string        `optional:"" help:"The environment to use from the Atlas configuration file."`
-	HasDevURL  bool          `optional:"" help:"Whether the environment config has a dev_url attribute." default:"false"`
-	DirName    string        `optional:"" help:"Name of target migration directory in Atlas Cloud."`
-	Replace    bool          `optional:"" help:"Replace existing Atlas CI workflow."`
-	stdin      io.ReadCloser `hidden:""`
-	cloudURL   string        `hidden:""`
+	DirPath     string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
+	Driver      string        `enum:"mysql,postgres,postgis,mariadb,sqlite,mssql,clickhouse" default:"mysql" help:"Driver of the migration directory (mysql,postgres,postgis,mariadb,sqlite,mssql,clickhouse)."`
+	Token       string        `short:"t" help:"Atlas authentication token."`
+	Repo        string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
+	ConfigPath  string        `optional:"" help:"Path to atlas.hcl configuration file."`
+	ConfigEnv   string        `optional:"" help:"The environment to use from the Atlas configuration file."`
+	HasDevURL   bool          `optional:"" help:"Whether the environment config has a dev_url attribute." default:"false"`
+	SchemaScope bool          `optional:"" help:"Limit the scope of the work done by Atlas (inspection, diffing, etc.) to one schema."`
+	DirName     string        `optional:"" help:"Name of target migration directory in Atlas Cloud."`
+	Replace     bool          `optional:"" help:"Replace existing Atlas CI workflow."`
+	stdin       io.ReadCloser `hidden:""`
+	cloudURL    string        `hidden:""`
 }
 
 func (i *InitActionCmd) Help() string {
@@ -139,6 +140,7 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		ConfigPath:    i.ConfigPath,
 		Env:           i.ConfigEnv,
 		CreateDevURL:  !i.HasDevURL,
+		SchemaScope:   i.SchemaScope,
 	}
 	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg, i.Replace); err != nil {
 		return err
