@@ -98,9 +98,9 @@
      {{- end -}}
 {{- else if eq .Driver "postgis" -}}
      {{- if .SchemaScope -}}
-          dev-url: 'docker://postgis/latest/dev'
+          dev-url: 'docker://postgis/latest/postgres?search_path=public'
      {{- else -}}
-          dev-url: 'docker://postgis/latest'
+          dev-url: 'docker://postgis/latest/dev'
      {{- end -}}
 {{- else if eq .Driver "mariadb" -}}
      {{- if .SchemaScope -}}

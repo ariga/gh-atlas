@@ -69,7 +69,7 @@ func (i *InitActionCmd) setParams(ctx context.Context, dirs []string, configs []
 	// sqlite has only one schema
 	if !i.SchemaScope && i.Driver != "sqlite" {
 		prompt := promptui.Select{
-			Label: "Do you manage a single schema or multiple? (used to limit the scope of the work done by Atlas to one schema)",
+			Label: "Do you manage a single schema or multiple? (used to limit the scope of the work done by Atlas)",
 			Stdin: i.stdin,
 			Items: []string{"single", "multiple"},
 		}
