@@ -66,6 +66,24 @@ func (i *InitActionCmd) setParams(ctx context.Context, dirs []string, configs []
 			return err
 		}
 	}
+	// sqlite has only one schema
+	if !i.SchemaScope && i.Driver != "sqlite" {
+		prompt := promptui.Select{
+			Label: "Do you manage a single schema or multiple? (used to limit the scope of the work done by Atlas)",
+			Stdin: i.stdin,
+			Items: []string{"single", "multiple"},
+		}
+		_, ans, err := prompt.Run()
+		if err != nil {
+			return err
+		}
+		switch ans {
+		case "single":
+			i.SchemaScope = true
+		case "multiple":
+			i.SchemaScope = false
+		}
+	}
 	if i.Token == "" {
 		prompt := promptui.Prompt{
 			Label: "Enter Atlas Cloud token",

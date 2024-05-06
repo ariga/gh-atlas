@@ -85,18 +85,42 @@
 
 {{- define "UseServices" }}
 {{- if eq .Driver "mysql" -}}
+     {{- if .SchemaScope -}}
           dev-url: 'mysql://root:pass@localhost:3306/dev'
+     {{- else -}}
+          dev-url: 'mysql://root:pass@localhost:3306'
+     {{- end -}}
 {{- else if eq .Driver "postgres" -}}
+     {{- if .SchemaScope -}}
           dev-url: 'postgres://postgres:pass@localhost:5432/dev?search_path=public&sslmode=disable'
+     {{- else -}}
+          dev-url: 'postgres://postgres:pass@localhost:5432/dev?sslmode=disable'
+     {{- end -}}
 {{- else if eq .Driver "postgis" -}}
+     {{- if .SchemaScope -}}
+          dev-url: 'docker://postgis/latest/postgres?search_path=public'
+     {{- else -}}
           dev-url: 'docker://postgis/latest/dev'
+     {{- end -}}
 {{- else if eq .Driver "mariadb" -}}
+     {{- if .SchemaScope -}}
           dev-url: 'maria://root:pass@localhost:3306/dev'
+     {{- else -}}
+          dev-url: 'maria://root:pass@localhost:3306'
+     {{- end -}}
 {{- else if eq .Driver "sqlite" -}}
           dev-url: 'sqlite://dev?mode=memory'
 {{- else if eq .Driver "clickhouse" -}}
+     {{- if .SchemaScope -}}
           dev-url: 'clickhouse://root:pass@localhost:9000/test'
+     {{- else -}}
+          dev-url: 'clickhouse://root:pass@localhost:9000'
+     {{- end -}}
 {{- else if eq .Driver "mssql" -}}
+     {{- if .SchemaScope -}}
+          dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433/test?mode=schema'
+     {{- else -}}
           dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433/test'
+     {{- end -}}
 {{- end -}}
 {{- end -}}

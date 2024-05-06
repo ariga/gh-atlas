@@ -21,6 +21,7 @@ type (
 		ConfigPath    string
 		Env           string
 		CreateDevURL  bool
+		SchemaScope   bool
 	}
 )
 
