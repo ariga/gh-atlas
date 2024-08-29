@@ -13,6 +13,7 @@ type (
 	Driver string
 	// Config passed to template parser
 	Config struct {
+		Flow          string
 		Path          string
 		DirName       string
 		SecretName    string
@@ -22,10 +23,13 @@ type (
 		Env           string
 		CreateDevURL  bool
 		SchemaScope   bool
+		From          []string
+		To            []string
 	}
 )
 
 var Drivers = []string{"mysql", "postgres", "postgis", "mariadb", "sqlite", "mssql", "clickhouse"}
+var Flows = []string{"migrate", "schema"}
 
 func validateDriver(s string) error {
 	if !slices.Contains(Drivers, s) {

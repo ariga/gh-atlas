@@ -52,6 +52,9 @@ var cli struct {
 
 // InitActionCmd is the command for initializing a new Atlas CI workflow.
 type InitActionCmd struct {
+	Flow        string        `optional:"" help:"Workflow to initialize (migrate, schema)."`
+	From        []string      `optional:"" help:"URL(s) of the current schema state."`
+	To          []string      `optional:"" help:"URL(s) of the desired schema state."`
 	DirPath     string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
 	Driver      string        `enum:"mysql,postgres,postgis,mariadb,sqlite,mssql,clickhouse" default:"mysql" help:"Driver of the migration directory (mysql,postgres,postgis,mariadb,sqlite,mssql,clickhouse)."`
 	Token       string        `short:"t" help:"Atlas authentication token."`
@@ -132,6 +135,7 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		return err
 	}
 	cfg := &gen.Config{
+		Flow:          i.Flow,
 		Path:          i.DirPath,
 		DirName:       i.DirName,
 		Driver:        i.Driver,
@@ -141,6 +145,8 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		Env:           i.ConfigEnv,
 		CreateDevURL:  !i.HasDevURL,
 		SchemaScope:   i.SchemaScope,
+		From:          i.From,
+		To:            i.To,
 	}
 	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg, i.Replace); err != nil {
 		return err

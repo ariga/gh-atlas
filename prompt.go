@@ -20,6 +20,42 @@ type ContentReader interface {
 // setParams sets the parameters for the init-action command.
 func (i *InitActionCmd) setParams(ctx context.Context, dirs []string, configs []string, cr ContentReader) error {
 	var err error
+	if i.Flow == "" {
+		prompt := promptui.Select{
+			Label:    "Choose workflow",
+			HideHelp: true,
+			Items:    gen.Flows,
+			Stdin:    i.stdin,
+		}
+		if _, i.Flow, err = prompt.Run(); err != nil {
+			return err
+		}
+	}
+	if i.Flow == "schema" {
+		// also need to support input from flags
+		if len(i.From) == 0 {
+			for {
+				prompt := promptui.Prompt{
+					Label: "Enter the URLs of the current schema state (leave empty to skip)",
+					Stdin: i.stdin,
+					Validate: func(input string) error {
+						if len(i.From) == 0 && strings.TrimSpace(input) == "" {
+							return errors.New("input cannot be empty")
+						}
+						return nil
+					},
+				}
+				var u string
+				if u, err = prompt.Run(); err != nil {
+					return err
+				}
+				if strings.TrimSpace(u) == "" {
+					break
+				}
+				i.From = append(i.From, u)
+			}
+		}
+	}
 	if i.DirPath == "" {
 		prompt := promptui.Select{
 			Label:    "Choose driver",
@@ -30,34 +66,36 @@ func (i *InitActionCmd) setParams(ctx context.Context, dirs []string, configs []
 		if _, i.Driver, err = prompt.Run(); err != nil {
 			return err
 		}
-		switch {
-		case len(dirs) == 0:
-			prompt := promptui.Prompt{
-				Label: "Enter the path of the migration directory in your repository",
-				Stdin: i.stdin,
+		if i.Flow == "migrate" {
+			switch {
+			case len(dirs) == 0:
+				prompt := promptui.Prompt{
+					Label: "Enter the path of the migration directory in your repository",
+					Stdin: i.stdin,
+				}
+				if i.DirPath, err = prompt.Run(); err != nil {
+					return err
+				}
+			case len(dirs) > 0:
+				opts := append(dirs, "provide another path")
+				prompt := promptui.Select{
+					Label:    "Choose migration directory",
+					HideHelp: true,
+					Items:    opts,
+					Stdin:    i.stdin,
+				}
+				if _, i.DirPath, err = prompt.Run(); err != nil {
+					return err
+				}
 			}
-			if i.DirPath, err = prompt.Run(); err != nil {
-				return err
-			}
-		case len(dirs) > 0:
-			opts := append(dirs, "provide another path")
-			prompt := promptui.Select{
-				Label:    "Choose migration directory",
-				HideHelp: true,
-				Items:    opts,
-				Stdin:    i.stdin,
-			}
-			if _, i.DirPath, err = prompt.Run(); err != nil {
-				return err
-			}
-		}
-		if i.DirPath == "provide another path" {
-			prompt := promptui.Prompt{
-				Label: "Enter the path of the migration directory in your repository",
-				Stdin: i.stdin,
-			}
-			if i.DirPath, err = prompt.Run(); err != nil {
-				return err
+			if i.DirPath == "provide another path" {
+				prompt := promptui.Prompt{
+					Label: "Enter the path of the migration directory in your repository",
+					Stdin: i.stdin,
+				}
+				if i.DirPath, err = prompt.Run(); err != nil {
+					return err
+				}
 			}
 		}
 	}

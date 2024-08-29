@@ -1,0 +1,24 @@
+{{ define "atlas-schema" }}
+      - uses: ariga/atlas-action/schema/plan@v1
+        with:
+          {{- if .From }}
+          from:{{ if gt (len .From) 1 }} |
+          {{- range .From }}
+            {{ . }}
+          {{- else }}
+          {{ index .From 0 }}
+          {{- end }}
+          {{- end }}
+          {{- if .CreateDevURL }}
+          {{ template "UseServices" . }}
+          {{- end }}
+          {{- with .ConfigPath }}
+          config: 'file://{{ . }}'
+          {{- end }}
+          {{- with .Env }}
+          env: '{{ . }}'
+          {{- end }}
+        env:
+          GITHUB_TOKEN: {{`${{ github.token }}`}}
+{{ end }}
+{{ end }}
