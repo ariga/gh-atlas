@@ -242,7 +242,7 @@ func (i *InitActionCmd) setDirName(names []string) error {
 
 func (i *InitActionCmd) openURL(url string) error {
 	prompt := promptui.Prompt{
-		Label:     "Open in browser?",
+		Label:     "Open in browser",
 		IsConfirm: true,
 		Stdin:     i.stdin,
 	}
