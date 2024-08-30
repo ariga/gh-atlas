@@ -13,7 +13,6 @@ import (
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/repository"
 	"github.com/google/go-github/v49/github"
-	"github.com/pkg/browser"
 
 	"ariga.io/gh-atlas/cloudapi"
 	"ariga.io/gh-atlas/gen"
@@ -117,6 +116,9 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		return err
 	case len(dirNames) == 0:
 		return errors.New("no migration directories found in your organization")
+	case len(dirNames) == 1:
+		fmt.Println("Found cloud migration directory:", dirNames[0])
+		i.DirName = dirNames[0]
 	case i.DirName == "":
 		// If the dir name was not provided by the user, set it interactively.
 		if err := i.setDirName(dirNames); err != nil {
@@ -150,7 +152,7 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		return err
 	}
 	fmt.Println("Created PR:", link)
-	if err = browser.OpenURL(link); err != nil {
+	if err = i.openURL(link); err != nil {
 		fmt.Printf("Failed to open %s in browser: %v\n", link, err)
 	}
 	return nil

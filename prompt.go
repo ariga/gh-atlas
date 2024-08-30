@@ -10,6 +10,7 @@ import (
 	"github.com/1lann/promptui"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/pkg/browser"
 )
 
 type ContentReader interface {
@@ -26,17 +27,16 @@ func (i *InitActionCmd) setParams(ctx context.Context, dirs []string, configs []
 			HideHelp: true,
 			Items:    gen.Drivers,
 			Stdin:    i.stdin,
+			Templates: &promptui.SelectTemplates{
+				Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Driver:" | faint }} {{ . }}`, promptui.IconGood),
+			},
 		}
 		if _, i.Driver, err = prompt.Run(); err != nil {
 			return err
 		}
 		switch {
 		case len(dirs) == 0:
-			prompt := promptui.Prompt{
-				Label: "Enter the path of the migration directory in your repository",
-				Stdin: i.stdin,
-			}
-			if i.DirPath, err = prompt.Run(); err != nil {
+			if i.DirPath, err = i.promptForCustomPath(); err != nil {
 				return err
 			}
 		case len(dirs) > 0:
@@ -46,17 +46,21 @@ func (i *InitActionCmd) setParams(ctx context.Context, dirs []string, configs []
 				HideHelp: true,
 				Items:    opts,
 				Stdin:    i.stdin,
+				Templates: &promptui.SelectTemplates{
+					Selected: fmt.Sprintf(
+						`{{ if ne . "%[1]s" }}{{ "%[2]s" | green }} {{ "%[3]s" | faint }} {{ . }} {{ end }}`,
+						"provide another path",
+						promptui.IconGood,
+						"Migrations directory:",
+					),
+				},
 			}
 			if _, i.DirPath, err = prompt.Run(); err != nil {
 				return err
 			}
 		}
 		if i.DirPath == "provide another path" {
-			prompt := promptui.Prompt{
-				Label: "Enter the path of the migration directory in your repository",
-				Stdin: i.stdin,
-			}
-			if i.DirPath, err = prompt.Run(); err != nil {
+			if i.DirPath, err = i.promptForCustomPath(); err != nil {
 				return err
 			}
 		}
@@ -72,6 +76,9 @@ func (i *InitActionCmd) setParams(ctx context.Context, dirs []string, configs []
 			Label: "Do you manage a single schema or multiple? (used to limit the scope of the work done by Atlas)",
 			Stdin: i.stdin,
 			Items: []string{"single", "multiple"},
+			Templates: &promptui.SelectTemplates{
+				Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Schema scope:" | faint }} {{ . }}`, promptui.IconGood),
+			},
 		}
 		_, ans, err := prompt.Run()
 		if err != nil {
@@ -94,6 +101,9 @@ func (i *InitActionCmd) setParams(ctx context.Context, dirs []string, configs []
 					return errors.New("token cannot be empty")
 				}
 				return nil
+			},
+			Templates: &promptui.PromptTemplates{
+				Success: fmt.Sprintf(`{{ "%s" | green }} {{ "Atlas Cloud token: " | faint }}`, promptui.IconGood),
 			},
 		}
 		if i.Token, err = prompt.Run(); err != nil {
@@ -134,6 +144,7 @@ func (i *InitActionCmd) setConfigPath(ctx context.Context, configs []string, cr 
 				Templates: &promptui.SelectTemplates{
 					Active:   "{{ if eq . \"no\" }}▸ No{{ else }}▸ Use with env {{ . | bold }}{{ end }}",
 					Inactive: "{{ if eq . \"no\" }}  No{{ else }}  Use with env {{ . | bold }}{{ end }}",
+					Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Config env: " | faint }} {{ . }}`, promptui.IconGood),
 				},
 				Stdin: i.stdin,
 			}
@@ -157,6 +168,7 @@ func (i *InitActionCmd) setConfigPath(ctx context.Context, configs []string, cr 
 			Templates: &promptui.SelectTemplates{
 				Active:   "{{ if eq . \"no\" }}▸ No{{ else }}▸ Use {{ . | bold }}{{ end }}",
 				Inactive: "{{ if eq . \"no\" }}  No{{ else }}  Use {{ . | bold }}{{ end }}",
+				Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Config file: " | faint }} {{ . }}`, promptui.IconGood),
 			},
 			Stdin: i.stdin,
 		}
@@ -200,6 +212,9 @@ func (i *InitActionCmd) setConfigPath(ctx context.Context, configs []string, cr 
 				HideHelp: true,
 				Items:    envNames,
 				Stdin:    i.stdin,
+				Templates: &promptui.SelectTemplates{
+					Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Config env: " | faint }} {{ . }}`, promptui.IconGood),
+				},
 			}
 			if _, i.ConfigEnv, err = prompt.Run(); err != nil {
 				return err
@@ -211,17 +226,39 @@ func (i *InitActionCmd) setConfigPath(ctx context.Context, configs []string, cr 
 }
 
 func (i *InitActionCmd) setDirName(names []string) error {
-	if len(names) == 1 {
-		i.DirName = names[0]
-		return nil
-	}
 	var err error
 	prompt := promptui.Select{
 		Label:    "Choose name of cloud migration directory",
 		HideHelp: true,
 		Items:    names,
 		Stdin:    i.stdin,
+		Templates: &promptui.SelectTemplates{
+			Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Cloud migration directory:" | faint }} {{ . }}`, promptui.IconGood),
+		},
 	}
 	_, i.DirName, err = prompt.Run()
 	return err
+}
+
+func (i *InitActionCmd) openURL(url string) error {
+	prompt := promptui.Prompt{
+		Label:     "Open in browser?",
+		IsConfirm: true,
+		Stdin:     i.stdin,
+	}
+	if _, err := prompt.Run(); err != nil {
+		return err
+	}
+	return browser.OpenURL(url)
+}
+
+func (i *InitActionCmd) promptForCustomPath() (string, error) {
+	prompt := promptui.Prompt{
+		Label: "Enter the path of the migration directory in your repository",
+		Stdin: i.stdin,
+		Templates: &promptui.PromptTemplates{
+			Success: fmt.Sprintf(`{{ "%s" | green }} {{ "Migrations directory: " | faint }}`, promptui.IconGood),
+		},
+	}
+	return prompt.Run()
 }
