@@ -46,16 +46,16 @@ jobs:
       - uses: ariga/atlas-action/migrate/push@v1
         if: github.ref == 'refs/heads/{{ .DefaultBranch }}'
         with:
-            dir: 'file://{{ .Path }}'
-            {{- with .DirName }}
-            dir-name: '{{ . }}'
-            {{- end }}
-            {{- if .CreateDevURL }}
-            {{ template "UseServices" . }}
-            {{- end }}
-            {{- with .ConfigPath }}
-            config: 'file://{{ . }}'
-            {{- end }}
-            {{- with .Env }}
-            env: '{{ . }}'
-            {{- end }}
+          dir: 'file://{{ .Path }}'
+          {{- with .DirName }}
+          dir-name: '{{ . }}'
+          {{- end }}
+          {{- if .CreateDevURL }}
+          {{ template "UseServices" . }}
+          {{- end }}
+          {{- with .ConfigPath }}
+          config: 'file://{{ . }}'
+          {{- end }}
+          {{- with .Env }}
+          env: '{{ . }}'
+          {{- end }}

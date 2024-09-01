@@ -33,6 +33,6 @@ jobs:
       - uses: ariga/atlas-action/migrate/push@v1
         if: github.ref == 'refs/heads/master'
         with:
-            dir: 'file://migrations'
-            dir-name: 'name'
-            dev-url: 'docker://postgis/latest/dev'
+          dir: 'file://migrations'
+          dir-name: 'name'
+          dev-url: 'docker://postgis/latest/dev'

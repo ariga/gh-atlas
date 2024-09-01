@@ -48,6 +48,6 @@ jobs:
       - uses: ariga/atlas-action/migrate/push@v1
         if: github.ref == 'refs/heads/master'
         with:
-            dir: 'file://migrations'
-            dir-name: 'name'
-            dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433/test'
+          dir: 'file://migrations'
+          dir-name: 'name'
+          dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433/test'
