@@ -204,8 +204,8 @@ func TestRunInitActionCmd(t *testing.T) {
 				DirName:     "name",
 				SchemaScope: true,
 			},
-			// enter, arrow key down, enter, `dir/migrations`, enter
-			prompt: "\n\x1b[B\n`dir/migrations`\n\n",
+			// arrow key down, enter, `dir/migrations`, enter, enter
+			prompt: "\x1b[B\n`dir/migrations`\n\n",
 			expected: &InitActionCmd{
 				DirPath:     "`dir/migrations`",
 				DirName:     "name",
@@ -322,7 +322,7 @@ func TestRunInitActionCmd(t *testing.T) {
 		{
 			name:   "ci file exists",
 			client: createGHClient(&mockService{}, &mockService{}),
-			prompt: "my token\n",
+			prompt: "\n",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				DirName: "name",
@@ -334,7 +334,7 @@ func TestRunInitActionCmd(t *testing.T) {
 		{
 			name:   "replace existing ci file",
 			client: createGHClient(&mockService{}, &mockService{}),
-			prompt: "my token\n",
+			prompt: "\n",
 			cmd: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
@@ -359,8 +359,8 @@ func TestRunInitActionCmd(t *testing.T) {
 					getContentError: &github.ErrorResponse{Message: "Not Found"},
 					// language=HCL
 					hclFileContent: `env "local" {
-                                          dev = "postgres://localhost:5432/dev"
-                                    }`},
+		                                  dev = "postgres://localhost:5432/dev"
+		                            }`},
 				&mockService{hasHclFile: true}),
 
 			cmd: &InitActionCmd{
@@ -390,8 +390,8 @@ func TestRunInitActionCmd(t *testing.T) {
 					getContentError: &github.ErrorResponse{Message: "Not Found"},
 					// language=HCL
 					hclFileContent: `env "local" {
-                                          dev = "postgres://localhost:5432/dev"
-                                    }`},
+		                                  dev = "postgres://localhost:5432/dev"
+		                            }`},
 				&mockService{hasHclFile: true}),
 
 			cmd: &InitActionCmd{
@@ -420,8 +420,8 @@ func TestRunInitActionCmd(t *testing.T) {
 					getContentError: &github.ErrorResponse{Message: "Not Found"},
 					// language=HCL
 					hclFileContent: `env "local" {
-                                          url = "postgres://localhost:5432/dev"
-                                    }`},
+		                                  url = "postgres://localhost:5432/dev"
+		                            }`},
 				&mockService{hasHclFile: true}),
 
 			cmd: &InitActionCmd{
