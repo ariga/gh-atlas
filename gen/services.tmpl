@@ -118,9 +118,9 @@
      {{- end -}}
 {{- else if eq .Driver "mssql" -}}
      {{- if .SchemaScope -}}
-          dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433/test?mode=schema'
+          dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433?database=master'
      {{- else -}}
-          dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433/test'
+          dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433?database=master&mode=database'
      {{- end -}}
 {{- end -}}
 {{- end -}}
