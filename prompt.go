@@ -81,7 +81,7 @@ func (i *InitActionCmd) setParams(ctx context.Context, re RepoExplorer, cloud cl
 	if repo != nil {
 		i.driver = repo.Driver
 	}
-	if !i.HasDevURL && i.driver == "" {
+	if !i.env.HasDevURL && i.driver == "" {
 		if err := i.setDriver(); err != nil {
 			return err
 		}

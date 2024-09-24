@@ -12,7 +12,7 @@ jobs:
     {{- if not .Env.HasDevURL }}
     {{- template "job-setup" . }}
     {{- end }}
-      - uses: ariga/atlas-action/schema/plan@master
+      - uses: ariga/atlas-action/schema/plan@v1
         with:
           {{- if .From }}
           from: {{ .From }}
@@ -26,9 +26,7 @@ jobs:
           {{- end }}
           {{- end }}
           {{- if not .Env.HasDevURL }}
-          {{- if .CreateDevURL }}
           {{ template "UseServices" . }}
-          {{- end -}}
           {{- end }}
           {{- with .Env.Path }}
           config: 'file://{{ . }}'
@@ -41,13 +39,11 @@ jobs:
     {{- if not .Env.HasDevURL }}
     {{- template "job-setup" . }}
     {{- end }}
-      - uses: ariga/atlas-action/schema/push@master
+      - uses: ariga/atlas-action/schema/push@v1
         id: schema-push
         with:
           {{- if not .Env.HasDevURL }}
-          {{- if .CreateDevURL }}
           {{ template "UseServices" . }}
-          {{- end -}}
           {{- end }}
           {{- if not .Env.HasSchemaSrc }}
           {{- if .To }}
@@ -65,7 +61,7 @@ jobs:
           {{- with .Env.Name }}
           env: '{{ . }}'
           {{- end }}
-      - uses: ariga/atlas-action/schema/plan/approve@master
+      - uses: ariga/atlas-action/schema/plan/approve@v1
         id: plan-approve
         with:
           {{- if .From }}
@@ -73,9 +69,7 @@ jobs:
           {{- end }}
           to: {{`${{ steps.schema-push.outputs.url }}`}}
           {{- if not .Env.HasDevURL }}
-          {{- if .CreateDevURL }}
           {{ template "UseServices" . }}
-          {{- end -}}
           {{- end }}
           {{- if not .Env.HasRepoName }}
           {{- with .CloudRepo }}
@@ -89,7 +83,7 @@ jobs:
           env: '{{ . }}'
           {{- end }}
       {{- if .SetupSchemaApply }}
-      - uses: ariga/atlas-action/schema/apply@master
+      - uses: ariga/atlas-action/schema/apply@v1
         if: {{`${{ steps.plan-approve.outputs.status == 'APPROVED' }}`}}
         with:
           {{- if not .Env.HasURL }}
@@ -103,9 +97,7 @@ jobs:
           {{- end }}
           {{- end }}
           {{- if not .Env.HasDevURL }}
-          {{- if .CreateDevURL }}
           {{ template "UseServices" . }}
-          {{- end -}}
           {{- end }}
           {{- with .Env.Path }}
           config: 'file://{{ . }}'

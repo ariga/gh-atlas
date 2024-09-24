@@ -31,7 +31,6 @@ type (
 		DefaultBranch    string
 		Driver           string
 		Env              Env
-		CreateDevURL     bool
 		SchemaScope      bool
 		CloudRepo        string
 		SetupSchemaApply bool

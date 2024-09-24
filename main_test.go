@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"ariga.io/gh-atlas/cloudapi"
+	"ariga.io/gh-atlas/gen"
 	"github.com/cli/go-gh/pkg/repository"
 	"github.com/google/go-github/v49/github"
 	"github.com/stretchr/testify/require"
@@ -417,9 +418,6 @@ func TestRunInitActionCmd(t *testing.T) {
 				DirName:     "name",
 				driver:      "MYSQL",
 				Token:       "one-repo",
-				ConfigPath:  "",
-				ConfigEnv:   "",
-				HasDevURL:   false,
 				SchemaScope: true,
 			},
 		},
@@ -447,10 +445,12 @@ func TestRunInitActionCmd(t *testing.T) {
 				DirName:     "name",
 				driver:      "MYSQL",
 				Token:       "one-repo",
-				ConfigPath:  "atlas.hcl",
-				ConfigEnv:   "local",
-				HasDevURL:   true,
 				SchemaScope: true,
+				env: gen.Env{
+					Name:      "local",
+					Path:      "atlas.hcl",
+					HasDevURL: true,
+				},
 			},
 		},
 		{
@@ -478,10 +478,8 @@ func TestRunInitActionCmd(t *testing.T) {
 				DirName:     "name",
 				driver:      "MYSQL",
 				Token:       "one-repo",
-				ConfigPath:  "",
-				ConfigEnv:   "",
-				HasDevURL:   false,
 				SchemaScope: true,
+				env:         gen.Env{},
 			},
 		},
 		{
@@ -511,8 +509,12 @@ func TestRunInitActionCmd(t *testing.T) {
 				Token:       "one-repo",
 				ConfigPath:  "atlas.hcl",
 				ConfigEnv:   "local",
-				HasDevURL:   false,
 				SchemaScope: true,
+				env: gen.Env{
+					Name:   "local",
+					Path:   "atlas.hcl",
+					HasURL: true,
+				},
 			},
 		},
 		{
@@ -568,19 +570,21 @@ func TestRunInitActionCmd(t *testing.T) {
 				SchemaScope: true,
 				Replace:     true,
 			},
-			prompt: "\natlas://init\n\n\n",
+			prompt: "\n\natlas://init\nfile://schema.hcl\n\n",
 			expected: &InitActionCmd{
 				From:             "atlas://init",
-				To:               "atlas://slug1",
+				To:               "file://schema.hcl",
 				Token:            "multi-repos",
-				ConfigPath:       "atlas.hcl",
 				driver:           "POSTGRESQL",
 				SchemaScope:      true,
-				ConfigEnv:        "local",
-				HasDevURL:        true,
 				cloudRepo:        "slug1",
 				Replace:          true,
 				SetupSchemaApply: truePtr,
+				env: gen.Env{
+					Name:      "local",
+					Path:      "atlas.hcl",
+					HasDevURL: true,
+				},
 			},
 		},
 		{
@@ -609,10 +613,10 @@ func TestRunInitActionCmd(t *testing.T) {
 				SchemaScope:      true,
 				SetupSchemaApply: truePtr,
 			},
-			prompt: "\x1b[B\x1b[B\x1b[B\natlas://d\n\x1b[B\n",
+			prompt: "\x1b[B\x1b[B\x1b[B\natlas://d\nfile://schema.hcl\n\x1b[B\n",
 			expected: &InitActionCmd{
 				Token:            "multi-repos",
-				To:               "atlas://slug3",
+				To:               "file://schema.hcl",
 				driver:           "POSTGRESQL",
 				From:             "atlas://d",
 				cloudRepo:        "slug3",
@@ -627,10 +631,10 @@ func TestRunInitActionCmd(t *testing.T) {
 				SchemaScope:      true,
 				SetupSchemaApply: nil,
 			},
-			prompt: "\x1b[B\x1b[B\x1b[B\natlas://d\n\x1b[B\n\x1b[B\n",
+			prompt: "\x1b[B\x1b[B\x1b[B\natlas://d\nfile://schema.hcl\n\x1b[B\n\x1b[B\n",
 			expected: &InitActionCmd{
 				Token:            "multi-repos",
-				To:               "atlas://slug3",
+				To:               "file://schema.hcl",
 				driver:           "POSTGRESQL",
 				From:             "atlas://d",
 				cloudRepo:        "slug3",
@@ -645,10 +649,10 @@ func TestRunInitActionCmd(t *testing.T) {
 				SchemaScope:      true,
 				SetupSchemaApply: nil,
 			},
-			prompt: "\x1b[B\x1b[B\x1b[B\natlas://d\n\n\x1b[B\n",
+			prompt: "\x1b[B\x1b[B\x1b[B\natlas://d\nfile://schema.hcl\n\n\x1b[B\n",
 			expected: &InitActionCmd{
 				Token:            "multi-repos",
-				To:               "atlas://slug3",
+				To:               "file://schema.hcl",
 				driver:           "POSTGRESQL",
 				From:             "atlas://d",
 				cloudRepo:        "slug3",
@@ -690,9 +694,7 @@ func requireCommandsEqual(t *testing.T, a, b *InitActionCmd) {
 	require.Equal(t, a.DirName, b.DirName, "DirName mismatch")
 	require.Equal(t, a.driver, b.driver, "Driver mismatch")
 	require.Equal(t, a.Token, b.Token, "Token mismatch")
-	require.Equal(t, a.ConfigPath, b.ConfigPath, "ConfigPath mismatch")
-	require.Equal(t, a.ConfigEnv, b.ConfigEnv, "ConfigEnv mismatch")
-	require.Equal(t, a.HasDevURL, b.HasDevURL, "HasDevURL mismatch")
+	require.Equal(t, a.env, b.env, "env mismatch")
 	require.Equal(t, a.Replace, b.Replace, "Replace mismatch")
 	require.Equal(t, a.SchemaScope, b.SchemaScope, "SchemaScope mismatch")
 	require.Equal(t, a.From, b.From, "From mismatch")

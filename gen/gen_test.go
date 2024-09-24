@@ -23,14 +23,16 @@ func TestVersionedFlowGen(t *testing.T) {
 				DefaultBranch: "master",
 				SecretName:    "ATLAS_CLOUD_TOKEN",
 				Driver:        name,
-				CreateDevURL:  true,
 				SchemaScope:   false,
+				Env: Env{
+					HasDevURL: false,
+				},
 			}
 			if strings.Contains(name, "atlas_config") {
 				cfg.Driver = strings.Split(name, "_")[0]
-				cfg.ConfigPath = "atlas.hcl"
-				cfg.Env = "dev"
-				cfg.CreateDevURL = false
+				cfg.Env.Path = "atlas.hcl"
+				cfg.Env.Name = "dev"
+				cfg.Env.HasDevURL = true
 			}
 			if strings.Contains(name, "schema_scope") {
 				cfg.Driver = strings.Split(name, "_")[0]
@@ -56,17 +58,14 @@ func TestDeclarativeFlowGen(t *testing.T) {
 			config: &Config{
 				Flow:             "declarative",
 				DefaultBranch:    "master",
-				Path:             "migrations",
 				SecretName:       "ATLAS_CLOUD_TOKEN_X1",
 				Driver:           "MYSQL",
-				CreateDevURL:     true,
 				SchemaScope:      false,
 				From:             "atlas://myrepo:v1",
 				To:               "atlas://myrepo:v2",
-				ConfigPath:       "atlas.hcl",
-				Env:              "GORM_MIGRATION_SOURCE",
 				CloudRepo:        "myrepo",
 				SetupSchemaApply: true,
+				Env:              Env{},
 			},
 		},
 		{
@@ -75,17 +74,37 @@ func TestDeclarativeFlowGen(t *testing.T) {
 			config: &Config{
 				Flow:             "declarative",
 				DefaultBranch:    "master",
-				Path:             "migrations",
 				SecretName:       "ATLAS_CLOUD_TOKEN_X1",
 				Driver:           "MYSQL",
-				CreateDevURL:     true,
 				SchemaScope:      false,
 				From:             "atlas://myrepo:v1",
 				To:               "atlas://myrepo:v2",
-				ConfigPath:       "atlas.hcl",
-				Env:              "GORM_MIGRATION_SOURCE",
 				CloudRepo:        "myrepo",
 				SetupSchemaApply: false,
+				Env: Env{
+					HasDevURL: false,
+				},
+			},
+		},
+		{
+			name:     "all config args supplied",
+			filename: "plan_has_file_config.yml",
+			config: &Config{
+				Flow:             "declarative",
+				DefaultBranch:    "master",
+				SecretName:       "ATLAS_CLOUD_TOKEN_X1",
+				Driver:           "MYSQL",
+				SchemaScope:      false,
+				CloudRepo:        "myrepo",
+				SetupSchemaApply: true,
+				Env: Env{
+					Name:         "prod",
+					Path:         "atlas.hcl",
+					HasDevURL:    true,
+					HasURL:       true,
+					HasSchemaSrc: true,
+					HasRepoName:  true,
+				},
 			},
 		},
 	}

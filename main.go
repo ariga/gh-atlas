@@ -55,10 +55,9 @@ type InitActionCmd struct {
 	To               string        `optional:"" help:"URL of the desired schema state."`
 	DirPath          string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
 	Token            string        `short:"t" help:"Atlas authentication token."`
-	Repo             string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
+	Repo             string        `short:"R" help:"GitHub repository <owner>/<name>, defaults to the current repository."`
 	ConfigPath       string        `optional:"" help:"Path to atlas.hcl configuration file."`
 	ConfigEnv        string        `optional:"" help:"The environment to use from the Atlas configuration file."`
-	HasDevURL        bool          `optional:"" help:"Whether the environment config has a dev_url attribute." default:"false"`
 	SchemaScope      bool          `optional:"" help:"Limit the scope of the work done by Atlas (inspection, diffing, etc.) to one schema."`
 	DirName          string        `optional:"" help:"Name of target migration directory in Atlas Cloud."`
 	Replace          bool          `optional:"" help:"Replace existing Atlas CI workflow."`
@@ -135,7 +134,6 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		SecretName:    secretName,
 		DefaultBranch: repo.defaultBranch,
 		Env:           i.env,
-		CreateDevURL:  !i.HasDevURL,
 		SchemaScope:   i.SchemaScope,
 		CloudRepo:     i.cloudRepo,
 	}

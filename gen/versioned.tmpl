@@ -19,7 +19,7 @@ jobs:
           {{- with .DirName }}
           dir-name: '{{ . }}'
           {{- end }}
-          {{- if .CreateDevURL }}
+          {{- if not .Env.HasDevURL }}
           {{ template "UseServices" . }}
           {{- end }}
           {{- with .Env.Path }}
@@ -35,7 +35,7 @@ jobs:
           {{- with .DirName }}
           dir-name: '{{ . }}'
           {{- end }}
-          {{- if .CreateDevURL }}
+          {{- if not .Env.HasDevURL }}
           {{ template "UseServices" . }}
           {{- end }}
           {{- with .Env.Path }}

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"ariga.io/gh-atlas/cloudapi"
+	"ariga.io/gh-atlas/gen"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,10 +30,8 @@ func TestRunInitActionCmd_setConfigPath(t *testing.T) {
 			},
 			configs: []string{"atlas.hcl"},
 			// arrow key down and then enter
-			prompt: "\x1b[B\n\n",
-			expected: &InitActionCmd{
-				ConfigPath: "",
-			},
+			prompt:   "\x1b[B\n\n",
+			expected: &InitActionCmd{},
 		},
 		{
 			name: "1 config file, use it",
@@ -44,9 +43,11 @@ func TestRunInitActionCmd_setConfigPath(t *testing.T) {
 			configs: []string{"atlas.hcl"},
 			prompt:  "\n",
 			expected: &InitActionCmd{
-				ConfigPath: "atlas.hcl",
-				ConfigEnv:  "local",
-				HasDevURL:  true,
+				env: gen.Env{
+					Name:      "local",
+					Path:      "atlas.hcl",
+					HasDevURL: true,
+				},
 			},
 		},
 		{
@@ -57,8 +58,10 @@ func TestRunInitActionCmd_setConfigPath(t *testing.T) {
 			configs: []string{"atlas.hcl"},
 			prompt:  "\n",
 			expected: &InitActionCmd{
-				ConfigPath: "atlas.hcl",
-				ConfigEnv:  "local",
+				env: gen.Env{
+					Name: "local",
+					Path: "atlas.hcl",
+				},
 			},
 		},
 		{
@@ -72,9 +75,11 @@ func TestRunInitActionCmd_setConfigPath(t *testing.T) {
 			// arrow key down, enter, enter
 			prompt: "\x1b[B\n\n",
 			expected: &InitActionCmd{
-				ConfigPath: "atlas2.hcl",
-				ConfigEnv:  "local",
-				HasDevURL:  true,
+				env: gen.Env{
+					Name:      "local",
+					Path:      "atlas2.hcl",
+					HasDevURL: true,
+				},
 			},
 		},
 		{
@@ -92,9 +97,44 @@ func TestRunInitActionCmd_setConfigPath(t *testing.T) {
 			// enter, arrow key down, enter
 			prompt: "\n\x1b[B\n",
 			expected: &InitActionCmd{
-				ConfigPath: "atlas.hcl",
-				ConfigEnv:  "prod",
-				HasDevURL:  true,
+				env: gen.Env{
+					Name:      "prod",
+					HasDevURL: true,
+					HasURL:    false,
+					Path:      "atlas.hcl",
+				},
+			},
+		},
+
+		{
+			name: " 2 config files, has unnamed env",
+			re: &mockRepoExplorer{
+				content: `
+				env {
+					name = atlas.env
+					url = "postgres://localhost:5432/prod"
+				  	dev = "postgres://localhost:5432/dev"
+					schema {
+						src = "file://./schema.sql"
+						repo {
+							name = "schema"
+						}
+					}
+				}
+		`,
+			},
+			configs: []string{"atlas.hcl", "atlas2.hcl"},
+			// enter, arrow key down, enter
+			prompt: "\nk8s\n",
+			expected: &InitActionCmd{
+				env: gen.Env{
+					Name:         "k8s",
+					Path:         "atlas.hcl",
+					HasDevURL:    true,
+					HasURL:       true,
+					HasSchemaSrc: true,
+					HasRepoName:  true,
+				},
 			},
 		},
 	}
@@ -112,7 +152,7 @@ func TestRunInitActionCmd_setConfigPath(t *testing.T) {
 			cmd := &InitActionCmd{
 				stdin: &stdinBuffer{r},
 			}
-			err = cmd.setConfigPath(context.Background(), tt.configs, tt.re)
+			err = cmd.setAtlasConfig(context.Background(), tt.configs, tt.re)
 			require.NoError(t, err)
 			requireCommandsEqual(t, tt.expected, cmd)
 		})

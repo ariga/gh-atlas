@@ -10,7 +10,7 @@ permissions:
 {{- end }}
 
 {{- define "job-setup" }}
-    {{- if .CreateDevURL }}
+    {{- if not .Env.HasDevURL }}
     {{- template "services" . }}
     {{- end }}
     runs-on: ubuntu-latest
