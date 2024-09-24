@@ -354,7 +354,7 @@ func (i *InitActionCmd) getEnvs(ctx context.Context, path string, cr RepoExplore
 				hasRepoName  bool
 			)
 			if len(b.Labels) == 0 {
-				//TODO: fix, it can be conflicting with other envs
+				//TODO: fix, it may conflict with other envs names
 				name = UnnamedEnv
 			} else {
 				name = b.Labels[0]
@@ -539,9 +539,6 @@ func (i *InitActionCmd) validateParams() error {
 		if i.DirPath != "" || i.DirName != "" {
 			return errors.New("dirpath and dirname are not applicable for declarative flow")
 		}
-		// if i.From == "" {
-		// 	return errors.New("from is required for declarative flow")
-		// }
 	}
 	return nil
 }
