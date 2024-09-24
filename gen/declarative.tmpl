@@ -97,6 +97,11 @@ jobs:
           url: {{ .From }}
           {{- end }}
           {{- end }}
+          {{- if not .Env.HasSchemaSrc }}
+          {{- if .To }}
+          to: {{ .To }}
+          {{- end }}
+          {{- end }}
           {{- if not .Env.HasDevURL }}
           {{- if .CreateDevURL }}
           {{ template "UseServices" . }}
