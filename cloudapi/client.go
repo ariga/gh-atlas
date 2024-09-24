@@ -28,12 +28,36 @@ func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	return http.DefaultTransport.RoundTrip(req)
 }
 
-// Client is a client for the Atlas Cloud API.
-type Client struct {
-	client   *http.Client
-	endpoint string
-	token    string
-}
+type (
+	// API defines how to interact with the Atlas Cloud API.
+	API interface {
+		ValidateToken(ctx context.Context) error
+		Repos(ctx context.Context) ([]Repo, error)
+	}
+	// Client is a client for the Atlas Cloud API.
+	Client struct {
+		client   *http.Client
+		endpoint string
+		token    string
+	}
+	// RepoType represents the type of an Atlas Cloud repository.
+	RepoType string
+	// Repo represents a project in the Atlas Cloud API.
+	Repo struct {
+		URL    string
+		Title  string
+		Slug   string
+		Type   RepoType
+		Driver string
+	}
+)
+
+var _ API = (*Client)(nil)
+
+const (
+	SchemaType    RepoType = "SCHEMA"
+	DirectoryType RepoType = "MIGRATION_DIRECTORY"
+)
 
 // New creates a new Client for the Atlas Cloud API.
 func New(endpoint, token string) *Client {
@@ -113,18 +137,16 @@ func (c *Client) ValidateToken(ctx context.Context) error {
 	return c.post(ctx, query, vars, &payload)
 }
 
-// DirNames fetches the names of all migration directories from the Atlas Cloud API.
-func (c *Client) DirNames(ctx context.Context) ([]string, error) {
+// Repos fetches data of all repositories from the Atlas Cloud.
+func (c *Client) Repos(ctx context.Context) ([]Repo, error) {
 	var (
 		payload struct {
-			DirSlugs []string `json:"dirSlugs"`
+			Repos []Repo `json:"repos"`
 		}
-		query = `query {
-			dirSlugs
-		}`
+		query = `query { repos { title slug url type driver } }`
 	)
 	if err := c.post(ctx, query, nil, &payload); err != nil {
 		return nil, err
 	}
-	return payload.DirSlugs, nil
+	return payload.Repos, nil
 }

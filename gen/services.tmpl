@@ -1,5 +1,5 @@
 {{- define "services" }}
-{{- if eq .Driver "mysql" }}
+{{- if eq .Driver "MYSQL" }}
     services:
       # Spin up a mysql:8 container to be used as the dev-database for analysis.
       mysql:
@@ -15,7 +15,7 @@
           --health-start-period 10s
           --health-timeout 5s
           --health-retries 10
-    {{- else if eq .Driver "postgres" }}
+    {{- else if eq .Driver "POSTGRESQL" }}
     services:
       # Spin up a postgres:15 container to be used as the dev-database for analysis.
       postgres:
@@ -31,7 +31,7 @@
           --health-start-period 10s
           --health-timeout 5s
           --health-retries 5
-    {{- else if eq .Driver "mariadb" }}
+    {{- else if eq .Driver "MARIADB" }}
     services:
       # Spin up a mariadb:11 container to be used as the dev-database for analysis.
       mariadb:
@@ -47,7 +47,7 @@
           --health-start-period 10s
           --health-timeout 5s
           --health-retries 10
-    {{- else if eq .Driver "clickhouse" }}
+    {{- else if eq .Driver "CLICKHOUSE" }}
     services:
       # Spin up a clickhouse:23.10 container to be used as the dev-database for analysis.
       clickhouse:
@@ -64,7 +64,7 @@
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    {{- else if eq .Driver "mssql" }}
+    {{- else if eq .Driver "SQLSERVER" }}
     services:
       # Spin up a mcr.microsoft.com/mssql/server:2022-latest container to be used as the dev-database for analysis.
       sqlserver:
@@ -84,39 +84,33 @@
 {{- end }}
 
 {{- define "UseServices" }}
-{{- if eq .Driver "mysql" -}}
+{{- if eq .Driver "MYSQL" -}}
      {{- if .SchemaScope -}}
           dev-url: 'mysql://root:pass@localhost:3306/dev'
      {{- else -}}
           dev-url: 'mysql://root:pass@localhost:3306'
      {{- end -}}
-{{- else if eq .Driver "postgres" -}}
+{{- else if eq .Driver "POSTGRESQL" -}}
      {{- if .SchemaScope -}}
           dev-url: 'postgres://postgres:pass@localhost:5432/dev?search_path=public&sslmode=disable'
      {{- else -}}
           dev-url: 'postgres://postgres:pass@localhost:5432/dev?sslmode=disable'
      {{- end -}}
-{{- else if eq .Driver "postgis" -}}
-     {{- if .SchemaScope -}}
-          dev-url: 'docker://postgis/latest/postgres?search_path=public'
-     {{- else -}}
-          dev-url: 'docker://postgis/latest/dev'
-     {{- end -}}
-{{- else if eq .Driver "mariadb" -}}
+{{- else if eq .Driver "MARIADB" -}}
      {{- if .SchemaScope -}}
           dev-url: 'maria://root:pass@localhost:3306/dev'
      {{- else -}}
           dev-url: 'maria://root:pass@localhost:3306'
      {{- end -}}
-{{- else if eq .Driver "sqlite" -}}
+{{- else if eq .Driver "SQLITE" -}}
           dev-url: 'sqlite://dev?mode=memory'
-{{- else if eq .Driver "clickhouse" -}}
+{{- else if eq .Driver "CLICKHOUSE" -}}
      {{- if .SchemaScope -}}
           dev-url: 'clickhouse://root:pass@localhost:9000/test'
      {{- else -}}
           dev-url: 'clickhouse://root:pass@localhost:9000'
      {{- end -}}
-{{- else if eq .Driver "mssql" -}}
+{{- else if eq .Driver "SQLSERVER" -}}
      {{- if .SchemaScope -}}
           dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433?database=master'
      {{- else -}}

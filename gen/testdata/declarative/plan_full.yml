@@ -1,0 +1,95 @@
+name: Atlas
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+# Permissions to write comments on the pull request.
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  plan:
+    if: ${{ github.event_name == 'pull_request' }}
+    services:
+      # Spin up a mysql:8 container to be used as the dev-database for analysis.
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: dev
+          MYSQL_ROOT_PASSWORD: pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -ppass"
+          --health-interval 10s
+          --health-start-period 10s
+          --health-timeout 5s
+          --health-retries 10
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: ariga/setup-atlas@v0
+        with:
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN_X1 }}
+      - uses: ariga/atlas-action/schema/plan@master
+        with:
+          from: atlas://myrepo:v1
+          schema-name: myrepo
+          dev-url: 'mysql://root:pass@localhost:3306'
+          config: 'file://atlas.hcl'
+          env: 'GORM_MIGRATION_SOURCE'
+  apply:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    services:
+      # Spin up a mysql:8 container to be used as the dev-database for analysis.
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: dev
+          MYSQL_ROOT_PASSWORD: pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -ppass"
+          --health-interval 10s
+          --health-start-period 10s
+          --health-timeout 5s
+          --health-retries 10
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: ariga/setup-atlas@v0
+        with:
+          cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN_X1 }}
+      - uses: ariga/atlas-action/schema/push@master
+        with:
+          dev-url: 'mysql://root:pass@localhost:3306'
+          schema-name: myrepo
+          config: 'file://atlas.hcl'
+          env: 'GORM_MIGRATION_SOURCE'
+      - uses: ariga/atlas-action/schema/plan/approve@master
+        id: plan-approve
+        with:
+          from: atlas://myrepo:v1
+          to: ${{ steps.schema-push.outputs.url }}
+          dev-url: 'mysql://root:pass@localhost:3306'
+          schema-name: myrepo
+          config: 'file://atlas.hcl'
+          env: 'GORM_MIGRATION_SOURCE'
+      - uses: ariga/atlas-action/schema/apply@master
+        if: ${{ steps.plan-approve.outputs.status == 'APPROVED' }}
+        with:
+          dev-url: 'mysql://root:pass@localhost:3306'
+          config: 'file://atlas.hcl'
+          env: 'GORM_MIGRATION_SOURCE'
+          plan: ${{ steps.plan-approve.outputs.plan }}

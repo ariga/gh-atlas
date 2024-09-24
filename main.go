@@ -7,8 +7,8 @@ import (
 	"io"
 	"log"
 	"math/rand"
-	"slices"
 
+	"github.com/1lann/promptui"
 	"github.com/alecthomas/kong"
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/repository"
@@ -51,25 +51,31 @@ var cli struct {
 
 // InitActionCmd is the command for initializing a new Atlas CI workflow.
 type InitActionCmd struct {
-	DirPath     string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
-	Driver      string        `enum:"mysql,postgres,postgis,mariadb,sqlite,mssql,clickhouse" default:"mysql" help:"Driver of the migration directory (mysql,postgres,postgis,mariadb,sqlite,mssql,clickhouse)."`
-	Token       string        `short:"t" help:"Atlas authentication token."`
-	Repo        string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
-	ConfigPath  string        `optional:"" help:"Path to atlas.hcl configuration file."`
-	ConfigEnv   string        `optional:"" help:"The environment to use from the Atlas configuration file."`
-	HasDevURL   bool          `optional:"" help:"Whether the environment config has a dev_url attribute." default:"false"`
-	SchemaScope bool          `optional:"" help:"Limit the scope of the work done by Atlas (inspection, diffing, etc.) to one schema."`
-	DirName     string        `optional:"" help:"Name of target migration directory in Atlas Cloud."`
-	Replace     bool          `optional:"" help:"Replace existing Atlas CI workflow."`
-	stdin       io.ReadCloser `hidden:""`
-	cloudURL    string        `hidden:""`
+	From             string        `optional:"" help:"URL of the current schema state."`
+	To               string        `optional:"" help:"URL of the desired schema state."`
+	DirPath          string        `arg:"" optional:"" type:"-path" help:"Path inside repository containing the migration files."`
+	Token            string        `short:"t" help:"Atlas authentication token."`
+	Repo             string        `short:"R" help:"GitHub repository owner/name, defaults to the current repository."`
+	ConfigPath       string        `optional:"" help:"Path to atlas.hcl configuration file."`
+	ConfigEnv        string        `optional:"" help:"The environment to use from the Atlas configuration file."`
+	HasDevURL        bool          `optional:"" help:"Whether the environment config has a dev_url attribute." default:"false"`
+	SchemaScope      bool          `optional:"" help:"Limit the scope of the work done by Atlas (inspection, diffing, etc.) to one schema."`
+	DirName          string        `optional:"" help:"Name of target migration directory in Atlas Cloud."`
+	Replace          bool          `optional:"" help:"Replace existing Atlas CI workflow."`
+	SetupSchemaApply *bool         `name:"schema-apply" help:"Whether to setup the 'schema apply' action."`
+	driver           string        `hidden:"" help:"Driver of the migration directory (mysql,postgresql,mariadb,sqlite,sqlserver,clickhouse)."`
+	flow             flowType      `hidden:"" help:"Workflow to initialize (versioned, declarative)."`
+	stdin            io.ReadCloser `hidden:""`
+	cloudURL         string        `hidden:""`
+	cloudRepo        string        `hidden:""`
+	env              gen.Env       `hidden:""`
 }
 
 func (i *InitActionCmd) Help() string {
 	return `Examples:
 	gh atlas init-action
 	gh atlas init-action --token=$ATLAS_CLOUD_TOKEN
-	gh atlas init-action --token=$ATLAS_CLOUD_TOKEN --dir-name="migrations" --driver="mysql" "dir/migrations"`
+	gh atlas init-action --token=$ATLAS_CLOUD_TOKEN --dir-name="migrations" "dir/migrations"`
 }
 
 const (
@@ -85,6 +91,10 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		branchName = "atlas-ci-" + randSuffix
 		secretName = "ATLAS_CLOUD_TOKEN_" + randSuffix
 	)
+	// validate params set by flags
+	if err := i.validateParams(); err != nil {
+		return err
+	}
 	if i.Repo != "" {
 		current, err = repository.Parse(i.Repo)
 		if err != nil {
@@ -96,36 +106,18 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		return err
 	}
 	repo := NewRepository(client, current, repoData.GetDefaultBranch())
-	dirs, err := repo.MigrationDirectories(ctx)
-	if err != nil {
-		return err
-	}
-	configs, err := repo.ConfigFiles(ctx)
-	if err != nil {
-		return err
-	}
-	if err = i.setParams(ctx, dirs, configs, repo); err != nil {
+	if err = i.setToken(); err != nil {
 		return err
 	}
 	cloud := cloudapi.New(i.cloudURL, i.Token)
 	if err = cloud.ValidateToken(ctx); err != nil {
-		return errors.New("the given atlas token is invalid, please generate a new one and try again")
+		return errors.New("the given Atlas token is invalid, please generate a new one and try again")
 	}
-	switch dirNames, err := cloud.DirNames(ctx); {
-	case err != nil:
+	// inherit in case config is set by flags
+	i.env.Path = i.ConfigPath
+	i.env.Name = i.ConfigEnv
+	if err = i.setParams(ctx, repo, cloud); err != nil {
 		return err
-	case len(dirNames) == 0:
-		return errors.New("no migration directories found in your organization")
-	case len(dirNames) == 1:
-		fmt.Println("Found cloud migration directory:", dirNames[0])
-		i.DirName = dirNames[0]
-	case i.DirName == "":
-		// If the dir name was not provided by the user, set it interactively.
-		if err := i.setDirName(dirNames); err != nil {
-			return err
-		}
-	case !slices.Contains(dirNames, i.DirName):
-		return fmt.Errorf("no migration directory with name %q found in your organization", i.DirName)
 	}
 	if err = repo.SetSecret(ctx, secretName, i.Token); err != nil {
 		return err
@@ -134,15 +126,21 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		return err
 	}
 	cfg := &gen.Config{
+		Flow:          string(i.flow),
+		From:          i.From,
+		To:            i.To,
 		Path:          i.DirPath,
 		DirName:       i.DirName,
-		Driver:        i.Driver,
+		Driver:        i.driver,
 		SecretName:    secretName,
 		DefaultBranch: repo.defaultBranch,
-		ConfigPath:    i.ConfigPath,
-		Env:           i.ConfigEnv,
+		Env:           i.env,
 		CreateDevURL:  !i.HasDevURL,
 		SchemaScope:   i.SchemaScope,
+		CloudRepo:     i.cloudRepo,
+	}
+	if i.flow == "declarative" {
+		cfg.SetupSchemaApply = *i.SetupSchemaApply
 	}
 	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg, i.Replace); err != nil {
 		return err
@@ -151,7 +149,11 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 	if err != nil {
 		return err
 	}
-	fmt.Println("Created PR:", link)
+	fmt.Printf("%s %s %s\n",
+		promptui.IconGood,
+		promptui.Styler(promptui.FGFaint)("Created PR:"),
+		link,
+	)
 	if err = i.openURL(link); err != nil {
 		fmt.Printf("Failed to open %s in browser: %v\n", link, err)
 	}

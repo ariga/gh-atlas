@@ -16,21 +16,23 @@ permissions:
 jobs:
   atlas:
     services:
-      # Spin up a postgres:15 container to be used as the dev-database for analysis.
-      postgres:
-        image: postgres:15
+      # Spin up a mcr.microsoft.com/mssql/server:2022-latest container to be used as the dev-database for analysis.
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
         env:
-          POSTGRES_DB: dev
-          POSTGRES_PASSWORD: pass
+          ACCEPT_EULA: Y
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: P@ssw0rd0995
         ports:
-          - 5432:5432
+          - 1433:1433
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -U sa -P P@ssw0rd0995 -Q \"SELECT 1\""
           --health-interval 10s
-          --health-start-period 10s
           --health-timeout 5s
           --health-retries 5
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -42,12 +44,10 @@ jobs:
         with:
           dir: 'file://migrations'
           dir-name: 'name'
-          dev-url: 'postgres://postgres:pass@localhost:5432/dev?sslmode=disable'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+          dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433?database=master&mode=database'
       - uses: ariga/atlas-action/migrate/push@v1
         if: github.ref == 'refs/heads/master'
         with:
           dir: 'file://migrations'
           dir-name: 'name'
-          dev-url: 'postgres://postgres:pass@localhost:5432/dev?sslmode=disable'
+          dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433?database=master&mode=database'

@@ -55,13 +55,13 @@ jobs:
           gh extension install .
       - name: Run GitHub atlas extension
         run: |
-          gh atlas init-action -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --dir-name="sync-action-integration-test" --driver="sqlite" "sqlite_dir" \
+          gh atlas init-action -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --dir-name="sync-action-integration-test" "sqlite_dir" \
           --config-path="atlas.hcl" --config-env="local"
       - name: Run GitHub atlas extension with invalid dir
         id: invalid_dir
         continue-on-error: true
         run: |
-          gh atlas init-action -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --dir-name="invalid" --driver="sqlite" "sqlite_dir" \
+          gh atlas init-action -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --dir-name="invalid" "sqlite_dir" \
           --config-path="atlas.hcl" --config-env="local"
       - name: Check invalid dir error
         if : steps.invalid_dir.outcome == 'success'
