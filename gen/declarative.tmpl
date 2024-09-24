@@ -92,6 +92,11 @@ jobs:
       - uses: ariga/atlas-action/schema/apply@master
         if: {{`${{ steps.plan-approve.outputs.status == 'APPROVED' }}`}}
         with:
+          {{- if not .Env.HasURL }}
+          {{- if .From }}
+          url: {{ .From }}
+          {{- end }}
+          {{- end }}
           {{- if not .Env.HasDevURL }}
           {{- if .CreateDevURL }}
           {{ template "UseServices" . }}
