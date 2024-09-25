@@ -187,7 +187,7 @@ func (i *InitActionCmd) getEnvs(ctx context.Context, path string, cr ContentRead
 	}
 	envs := make(map[string]bool)
 	for _, b := range file.Body.(*hclsyntax.Body).Blocks {
-		if b.Type == "env" {
+		if b.Type == "env" && len(b.Labels) > 0 {
 			_, hasDev := b.Body.Attributes["dev"]
 			envs[b.Labels[0]] = hasDev
 		}
