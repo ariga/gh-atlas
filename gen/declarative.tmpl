@@ -17,8 +17,10 @@ jobs:
           {{- if .From }}
           from: {{ .From }}
           {{- end }}
+          {{- if not .Env.HasSchemaSrc }}
           {{- if .To }}
           to: {{ .To }}
+          {{- end }}
           {{- end }}
           {{- if not .Env.HasRepoName }}
           {{- with .CloudRepo }}
@@ -39,16 +41,21 @@ jobs:
     {{- if not .Env.HasDevURL }}
     {{- template "job-setup" . }}
     {{- end }}
-      - uses: ariga/atlas-action/schema/push@v1
-        id: schema-push
+      - uses: ariga/atlas-action/schema/plan/approve@v1
+        id: plan-approve
         with:
-          {{- if not .Env.HasDevURL }}
-          {{ template "UseServices" . }}
+          {{- if not .Env.HasURL }}
+          {{- if .From }}
+          from: {{ .From }}
+          {{- end }}
           {{- end }}
           {{- if not .Env.HasSchemaSrc }}
           {{- if .To }}
-          url: {{ .To }}
+          to: {{ .To }}
           {{- end }}
+          {{- end }}
+          {{- if not .Env.HasDevURL }}
+          {{ template "UseServices" . }}
           {{- end }}
           {{- if not .Env.HasRepoName }}
           {{- with .CloudRepo }}
@@ -61,15 +68,15 @@ jobs:
           {{- with .Env.Name }}
           env: '{{ . }}'
           {{- end }}
-      - uses: ariga/atlas-action/schema/plan/approve@v1
-        id: plan-approve
+      - uses: ariga/atlas-action/schema/push@v1
         with:
-          {{- if .From }}
-          from: {{ .From }}
-          {{- end }}
-          to: {{`${{ steps.schema-push.outputs.url }}`}}
           {{- if not .Env.HasDevURL }}
           {{ template "UseServices" . }}
+          {{- end }}
+          {{- if not .Env.HasSchemaSrc }}
+          {{- if .To }}
+          url: {{ .To }}
+          {{- end }}
           {{- end }}
           {{- if not .Env.HasRepoName }}
           {{- with .CloudRepo }}

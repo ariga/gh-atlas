@@ -18,15 +18,13 @@ jobs:
           env: 'prod'
   apply:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-      - uses: ariga/atlas-action/schema/push@v1
-        id: schema-push
-        with:
-          config: 'file://atlas.hcl'
-          env: 'prod'
       - uses: ariga/atlas-action/schema/plan/approve@v1
         id: plan-approve
         with:
-          to: ${{ steps.schema-push.outputs.url }}
+          config: 'file://atlas.hcl'
+          env: 'prod'
+      - uses: ariga/atlas-action/schema/push@v1
+        with:
           config: 'file://atlas.hcl'
           env: 'prod'
       - uses: ariga/atlas-action/schema/apply@v1

@@ -70,16 +70,15 @@ jobs:
       - uses: ariga/setup-atlas@v0
         with:
           cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN_X1 }}
-      - uses: ariga/atlas-action/schema/push@v1
-        id: schema-push
-        with:
-          dev-url: 'mysql://root:pass@localhost:3306'
-          url: atlas://myrepo:v2
-          schema-name: myrepo
       - uses: ariga/atlas-action/schema/plan/approve@v1
         id: plan-approve
         with:
           from: atlas://myrepo:v1
-          to: ${{ steps.schema-push.outputs.url }}
+          to: atlas://myrepo:v2
           dev-url: 'mysql://root:pass@localhost:3306'
+          schema-name: myrepo
+      - uses: ariga/atlas-action/schema/push@v1
+        with:
+          dev-url: 'mysql://root:pass@localhost:3306'
+          url: atlas://myrepo:v2
           schema-name: myrepo
