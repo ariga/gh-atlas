@@ -305,15 +305,10 @@ func (i *InitActionCmd) setAtlasConfig(ctx context.Context, configs []string, cr
 	if len(configs) == 0 {
 		return nil
 	}
-	return i.handleAtlasConfig(ctx, configs, cr)
-}
-
-func (i *InitActionCmd) handleAtlasConfig(ctx context.Context, configs []string, cr RepoExplorer) error {
 	config, err := i.chooseConfig(configs)
 	if err != nil || config == "" {
 		return err
 	}
-	i.env.Path = config
 	envs, err := i.getEnvs(ctx, config, cr)
 	if err != nil {
 		return err
