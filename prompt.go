@@ -206,7 +206,7 @@ func (i *InitActionCmd) setCurrentState() error {
 		},
 		Templates: &promptui.PromptTemplates{
 			Valid:   fmt.Sprintf(`{{ "%s" | green }} {{ . | faint }} {{": " | faint }}`, promptui.IconGood),
-			Success: fmt.Sprintf(`{{ "%s" | green }} {{ "Current schema state URL: " | faint }}`, promptui.IconGood),
+			Success: fmt.Sprintf(`{{ "%s" | green }} {{ "Current schema state URL:" | faint }}`, promptui.IconGood),
 		},
 	}
 	f, err := prompt.Run()
