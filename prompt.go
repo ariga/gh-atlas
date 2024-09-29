@@ -124,55 +124,46 @@ func (i *InitActionCmd) setDriver() error {
 }
 
 func (i *InitActionCmd) selectAtlasRepo(ctx context.Context, cloud cloudapi.API) (*cloudapi.Repo, error) {
+	var choose int
 	repos, err := cloud.Repos(ctx)
-	if err != nil {
+	switch {
+	case err != nil:
 		return nil, err
-	}
-	// if i.To or i.DirName are set (by flags),
-	// it means that the user wants to use a specific schema state or migration directory
-	// we'll search for the repo with the same name
-	// if found, return it
-	if i.To != "" || i.DirName != "" {
-		found := false
-		for _, r := range repos {
-			if r.URL == i.To || r.Slug == i.DirName {
-				return &r, nil
-			}
+	case len(repos) == 0:
+		return nil, errors.New("no repositories found")
+	case i.To != "": // Search by URL
+		choose = slices.IndexFunc(repos, func(r cloudapi.Repo) bool {
+			return r.URL == i.To
+		})
+		if choose == -1 {
+			return nil, errors.New("no repository with given URL found")
 		}
-		// otherwise, the a specific repo is set, but not found, return an error
-		if !found {
+	case i.DirName != "": // Search by directory name
+		choose = slices.IndexFunc(repos, func(r cloudapi.Repo) bool {
+			return r.Slug == i.DirName
+		})
+		if choose == -1 {
 			return nil, errors.New("no repository with given name found")
 		}
+	case len(repos) == 1:
+		choose = 0
+	default:
+		prompt := promptui.Select{
+			Label: "Select an Atlas Cloud Repository",
+			Items: repos,
+			Stdin: i.stdin,
+			Templates: &promptui.SelectTemplates{
+				Active:   `{{ .Title }}`,
+				Inactive: `{{ .Title }}`,
+				Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Selected repository:" | faint }} {{ .Title }}`, promptui.IconGood),
+			},
+		}
+		choose, _, err = prompt.Run()
+		if err != nil {
+			return nil, err
+		}
 	}
-	if len(repos) == 0 {
-		return nil, fmt.Errorf("no repositories found")
-	}
-	if len(repos) == 1 {
-		return &repos[0], nil
-	}
-	repoTitles := make([]string, 0, len(repos))
-	byTitle := make(map[string]cloudapi.Repo)
-	for _, r := range repos {
-		repoTitles = append(repoTitles, r.Title)
-		byTitle[r.Title] = r
-	}
-	prompt := promptui.Select{
-		Label: "Select an Atlas Cloud Repository",
-		Items: repoTitles,
-		Stdin: i.stdin,
-		Templates: &promptui.SelectTemplates{
-			Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Selected repository:" | faint }} {{ . }}`, promptui.IconGood),
-		},
-	}
-	_, t, err := prompt.Run()
-	if err != nil {
-		return nil, err
-	}
-	selected, ok := byTitle[t]
-	if !ok {
-		return nil, fmt.Errorf("no repository with name %q found", t)
-	}
-	return &selected, nil
+	return &repos[choose], nil
 }
 
 func (i *InitActionCmd) setDesiredState() error {
