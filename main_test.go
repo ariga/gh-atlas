@@ -188,8 +188,6 @@ func TestRunInitActionCmd(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	defaultClient := createGHClient(&mockService{getContentError: &github.ErrorResponse{Message: "Not Found"}}, &mockService{})
-	truePtr := func() *bool { t := true; return &t }()
-	falsePtr := func() *bool { f := false; return &f }()
 	var tests = []struct {
 		name     string
 		client   *githubClient
@@ -579,7 +577,7 @@ func TestRunInitActionCmd(t *testing.T) {
 				SchemaScope:      true,
 				cloudRepo:        "slug1",
 				Replace:          true,
-				SetupSchemaApply: truePtr,
+				SetupSchemaApply: ptr(true),
 				env: gen.Env{
 					Name:      "local",
 					Path:      "atlas.hcl",
@@ -595,7 +593,7 @@ func TestRunInitActionCmd(t *testing.T) {
 				driver:           "MYSQL",
 				Token:            "multi-repos",
 				SchemaScope:      true,
-				SetupSchemaApply: truePtr,
+				SetupSchemaApply: ptr(true),
 			},
 			expected: &InitActionCmd{
 				From:             "schema.hcl",
@@ -603,7 +601,7 @@ func TestRunInitActionCmd(t *testing.T) {
 				driver:           "POSTGRESQL",
 				Token:            "multi-repos",
 				SchemaScope:      true,
-				SetupSchemaApply: truePtr,
+				SetupSchemaApply: ptr(true),
 			},
 		},
 		{
@@ -611,7 +609,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			cmd: &InitActionCmd{
 				Token:            "multi-repos",
 				SchemaScope:      true,
-				SetupSchemaApply: truePtr,
+				SetupSchemaApply: ptr(true),
 			},
 			prompt: "\x1b[B\x1b[B\x1b[B\natlas://d\nfile://schema.hcl\n\x1b[B\n",
 			expected: &InitActionCmd{
@@ -621,7 +619,7 @@ func TestRunInitActionCmd(t *testing.T) {
 				From:             "atlas://d",
 				cloudRepo:        "slug3",
 				SchemaScope:      true,
-				SetupSchemaApply: truePtr,
+				SetupSchemaApply: ptr(true),
 			},
 		},
 		{
@@ -639,7 +637,7 @@ func TestRunInitActionCmd(t *testing.T) {
 				From:             "atlas://d",
 				cloudRepo:        "slug3",
 				SchemaScope:      true,
-				SetupSchemaApply: falsePtr,
+				SetupSchemaApply: ptr(false),
 			},
 		},
 		{
@@ -657,7 +655,7 @@ func TestRunInitActionCmd(t *testing.T) {
 				From:             "atlas://d",
 				cloudRepo:        "slug3",
 				SchemaScope:      true,
-				SetupSchemaApply: truePtr,
+				SetupSchemaApply: ptr(true),
 			},
 		},
 	}

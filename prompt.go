@@ -486,8 +486,7 @@ func (i *InitActionCmd) setSetupSchemaApply() error {
 	if err != nil {
 		return err
 	}
-	s := setup == "yes"
-	i.SetupSchemaApply = &s
+	i.SetupSchemaApply = ptr(setup == "yes")
 	return nil
 }
 
@@ -509,4 +508,8 @@ func (i *InitActionCmd) validateParams() error {
 		}
 	}
 	return nil
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }

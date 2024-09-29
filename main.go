@@ -137,7 +137,7 @@ func (i *InitActionCmd) Run(ctx context.Context, client *githubClient, current r
 		SchemaScope:   i.SchemaScope,
 		CloudRepo:     i.cloudRepo,
 	}
-	if i.flow == "declarative" {
+	if i.flow == "declarative" && i.SetupSchemaApply != nil {
 		cfg.SetupSchemaApply = *i.SetupSchemaApply
 	}
 	if err = repo.AddAtlasYAML(ctx, cfg, branchName, commitMsg, i.Replace); err != nil {
