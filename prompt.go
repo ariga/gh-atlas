@@ -153,8 +153,8 @@ func (i *InitActionCmd) selectAtlasRepo(ctx context.Context, cloud cloudapi.API)
 			Items: repos,
 			Stdin: i.stdin,
 			Templates: &promptui.SelectTemplates{
-				Active:   `{{ .Title }}`,
-				Inactive: `{{ .Title }}`,
+				Active:   `▸ {{ .Title }}`,
+				Inactive: `  {{ .Title }}`,
 				Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Selected repository:" | faint }} {{ .Title }}`, promptui.IconGood),
 			},
 		}
@@ -310,7 +310,7 @@ func (i *InitActionCmd) setAtlasConfig(ctx context.Context, configs []string, cr
 
 func (i *InitActionCmd) handleAtlasConfig(ctx context.Context, configs []string, cr RepoExplorer) error {
 	config, err := i.chooseConfig(configs)
-	if err != nil || config == "no" {
+	if err != nil || config == "" {
 		return err
 	}
 	i.env.Path = config
@@ -359,8 +359,12 @@ func (i *InitActionCmd) getEnvs(ctx context.Context, path string, cr RepoExplore
 		}
 	}
 	if len(envs) > 1 {
+		// put unnamed env at the end
 		slices.SortFunc(envs, func(l, r gen.Env) int {
 			if r.Name == "" {
+				return -1
+			}
+			if l.Name == "" {
 				return 1
 			}
 			return strings.Compare(l.Name, r.Name)
@@ -382,6 +386,9 @@ func (i *InitActionCmd) chooseConfig(configs []string) (string, error) {
 		Stdin: i.stdin,
 	}
 	_, config, err := prompt.Run()
+	if config == "no" {
+		return "", nil
+	}
 	return config, err
 }
 
@@ -394,8 +401,8 @@ func (i *InitActionCmd) chooseEnv(envs []gen.Env) error {
 			Items:    envs,
 			Stdin:    i.stdin,
 			Templates: &promptui.SelectTemplates{
-				Active:   `{{ or .Name "OTHER" }}`,
-				Inactive: `{{ or .Name "OTHER" }}`,
+				Active:   `▸ {{ or .Name "OTHER" }}`,
+				Inactive: `  {{ or .Name "OTHER" }}`,
 				Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Config env: " | faint }} {{ or .Name "OTHER" }}`, promptui.IconGood),
 			},
 		}
@@ -419,7 +426,7 @@ func (i *InitActionCmd) chooseEnv(envs []gen.Env) error {
 
 func (i *InitActionCmd) promptForEnvName() (string, error) {
 	prompt := promptui.Prompt{
-		Label: "Enter the name of the env block",
+		Label: "Enter the environment name",
 		Stdin: i.stdin,
 		Templates: &promptui.PromptTemplates{
 			Success: fmt.Sprintf(`{{ "%s" | green }} {{ "Env block name: " | faint }}`, promptui.IconGood),
