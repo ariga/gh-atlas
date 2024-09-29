@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"ariga.io/gh-atlas/cloudapi"
@@ -19,8 +20,6 @@ type flowType string
 const (
 	Versioned   flowType = "versioned"
 	Declarative flowType = "declarative"
-
-	UnnamedEnv = "OTHER"
 )
 
 // setParams sets the parameters for the init-action command.
@@ -331,10 +330,10 @@ func (i *InitActionCmd) handleAtlasConfig(ctx context.Context, configs []string,
 	if len(envs) == 0 {
 		return nil
 	}
-	return i.chooseEnv(envs, config)
+	return i.chooseEnv(envs)
 }
 
-func (i *InitActionCmd) getEnvs(ctx context.Context, path string, cr RepoExplorer) (envs map[string]gen.Env, err error) {
+func (i *InitActionCmd) getEnvs(ctx context.Context, path string, cr RepoExplorer) (envs []gen.Env, err error) {
 	content, err := cr.ReadContent(ctx, path)
 	if err != nil {
 		return nil, err
@@ -343,43 +342,38 @@ func (i *InitActionCmd) getEnvs(ctx context.Context, path string, cr RepoExplore
 	if len(diags) > 0 {
 		return nil, fmt.Errorf("failed to parse %s: %s", path, diags.Error())
 	}
-	envs = make(map[string]gen.Env)
-	for _, b := range file.Body.(*hclsyntax.Body).Blocks {
-		if b.Type == "env" {
-			var (
-				name         string
-				hasDevURL    bool
-				hasURL       bool
-				hasSchemaSrc bool
-				hasRepoName  bool
-			)
-			if len(b.Labels) == 0 {
-				//TODO: fix, it may conflict with other envs names
-				name = UnnamedEnv
-			} else {
-				name = b.Labels[0]
+	envs = []gen.Env{}
+	for _, blk := range file.Body.(*hclsyntax.Body).Blocks {
+		if blk.Type == "env" {
+			b := blk.Body
+			e := gen.Env{Path: path}
+			if len(blk.Labels) > 0 {
+				e.Name = blk.Labels[0]
 			}
-			_, hasDevURL = b.Body.Attributes["dev"]
-			_, hasURL = b.Body.Attributes["url"]
-			for _, bb := range b.Body.Blocks {
-				if bb.Type == "schema" {
-					_, hasSchemaSrc = bb.Body.Attributes["src"]
-				}
-				for _, bbb := range bb.Body.Blocks {
-					if bbb.Type == "repo" {
-						_, hasRepoName = bbb.Body.Attributes["name"]
+			_, e.HasDevURL = b.Attributes["dev"]
+			_, e.HasURL = b.Attributes["url"]
+			if idx := slices.IndexFunc(b.Blocks, func(b *hclsyntax.Block) bool {
+				return b.Type == "schema"
+			}); idx != -1 {
+				b = b.Blocks[idx].Body
+				e.HasRepoName = slices.ContainsFunc(b.Blocks, func(b *hclsyntax.Block) (ok bool) {
+					if b.Type == "repo" {
+						_, ok = b.Body.Attributes["name"]
 					}
-				}
+					return ok
+				})
+				_, e.HasSchemaSrc = b.Attributes["src"]
 			}
-			envs[name] = gen.Env{
-				Name:         name,
-				HasDevURL:    hasDevURL,
-				HasURL:       hasURL,
-				HasSchemaSrc: hasSchemaSrc,
-				HasRepoName:  hasRepoName,
-				Path:         path,
-			}
+			envs = append(envs, e)
 		}
+	}
+	if len(envs) > 1 {
+		slices.SortFunc(envs, func(l, r gen.Env) int {
+			if r.Name == "" {
+				return 1
+			}
+			return strings.Compare(l.Name, r.Name)
+		})
 	}
 	return envs, nil
 }
@@ -400,59 +394,35 @@ func (i *InitActionCmd) chooseConfig(configs []string) (string, error) {
 	return config, err
 }
 
-func (i *InitActionCmd) chooseEnv(envs map[string]gen.Env, config string) error {
-	envNames := make([]string, 0, len(envs))
-	hasUnnamedEnv := false
-	for k := range envs {
-		envNames = append(envNames, k)
-		if k == UnnamedEnv {
-			hasUnnamedEnv = true
+func (i *InitActionCmd) chooseEnv(envs []gen.Env) error {
+	choose := 0
+	if len(envs) > 1 {
+		prompt := promptui.Select{
+			Label:    "Choose an environment",
+			HideHelp: true,
+			Items:    envs,
+			Stdin:    i.stdin,
+			Templates: &promptui.SelectTemplates{
+				Active:   `{{ or .Name "OTHER" }}`,
+				Inactive: `{{ or .Name "OTHER" }}`,
+				Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Config env: " | faint }} {{ or .Name "OTHER" }}`, promptui.IconGood),
+			},
+		}
+		var err error
+		choose, _, err = prompt.Run()
+		if err != nil {
+			return err
 		}
 	}
-	if len(envNames) == 1 && hasUnnamedEnv {
+	env := envs[choose]
+	if env.Name == "" {
 		name, err := i.promptForEnvName()
 		if err != nil {
 			return err
 		}
-		var env gen.Env
-		for _, v := range envs {
-			env = v
-		}
 		env.Name = name
-		i.env = env
-		return nil
 	}
-	if len(envNames) == 1 {
-		i.env = envs[envNames[0]]
-		return nil
-	}
-	prompt := promptui.Select{
-		Label:    "Choose an environment",
-		HideHelp: true,
-		Items:    envNames,
-		Stdin:    i.stdin,
-		Templates: &promptui.SelectTemplates{
-			Selected: fmt.Sprintf(`{{ "%s" | green }} {{ "Config env: " | faint }} {{ . }}`, promptui.IconGood),
-		},
-	}
-	_, ans, err := prompt.Run()
-	if err != nil {
-		return err
-	}
-	if ans == UnnamedEnv {
-		name, err := i.promptForEnvName()
-		if err != nil {
-			return err
-		}
-		var env gen.Env
-		for _, v := range envs {
-			env = v
-		}
-		env.Name = name
-		i.env = env
-		return nil
-	}
-	i.env = envs[ans]
+	i.env = env
 	return nil
 }
 
