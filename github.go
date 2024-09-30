@@ -46,6 +46,15 @@ type (
 		Actions      actionsService
 		PullRequests pullRequestsService
 	}
+	// RepoExplorer defines methods for exploring and retrieving information from a repository.
+	RepoExplorer interface {
+		// MigrationDirectories returns a list of paths to directories containing migration files.
+		MigrationDirectories(ctx context.Context) ([]string, error)
+		// ConfigFiles returns a list of paths to configuration files (atlas.hcl) in the repository.
+		ConfigFiles(ctx context.Context) ([]string, error)
+		// ReadContent retrieves the content of a file at the specified path.
+		ReadContent(ctx context.Context, path string) (string, error)
+	}
 )
 
 type Repository struct {
@@ -54,6 +63,8 @@ type Repository struct {
 	defaultBranch string
 	client        *githubClient
 }
+
+var _ RepoExplorer = (*Repository)(nil)
 
 // NewRepository creates a new repository object.
 func NewRepository(client *githubClient, current repository.Repository, defaultBranch string) *Repository {
@@ -193,7 +204,7 @@ func (r *Repository) ConfigFiles(ctx context.Context) ([]string, error) {
 	return paths, nil
 }
 
-// Implementation of the ContentReader interface.
+// ReadContent retrieves the content of a file at the specified path.
 func (r *Repository) ReadContent(ctx context.Context, path string) (string, error) {
 	fileContents, _, _, err := r.client.Repositories.GetContents(ctx, r.owner, r.name, path, nil)
 	if err != nil {

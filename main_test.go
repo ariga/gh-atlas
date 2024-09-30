@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"ariga.io/gh-atlas/cloudapi"
+	"ariga.io/gh-atlas/gen"
 	"github.com/cli/go-gh/pkg/repository"
 	"github.com/google/go-github/v49/github"
 	"github.com/stretchr/testify/require"
@@ -116,10 +118,40 @@ func createGHClient(repoSvc repositoriesService, gitSvc gitService) *githubClien
 
 func TestRunInitActionCmd(t *testing.T) {
 	repo, err := repository.Parse("owner/repo")
-	dirsByToken := map[string][]string{
-		"token":    {"name"},
-		"multiple": {"name", "name2"},
-		"empty":    {},
+	reposByToken := map[string][]cloudapi.Repo{
+		"one-repo": {
+			{
+				URL:    "atlas://name",
+				Slug:   "name",
+				Title:  "declarative_tests (Migration Directory)",
+				Type:   "MIGRATION_DIRECTORY",
+				Driver: "MYSQL",
+			},
+		},
+		"multi-repos": {
+			{
+				URL:    "atlas://slug1",
+				Slug:   "slug1",
+				Type:   "SCHEMA",
+				Title:  "declarative_tests (Schema)",
+				Driver: "POSTGRESQL",
+			},
+			{
+				URL:    "atlas://slug2",
+				Slug:   "slug2",
+				Type:   "MIGRATION_DIRECTORY",
+				Title:  "darkhourse-initial (Migration Directory)",
+				Driver: "MYSQL",
+			},
+			{
+				URL:    "atlas://slug3",
+				Slug:   "slug3",
+				Type:   "SCHEMA",
+				Title:  "pg (Schema)",
+				Driver: "",
+			},
+		},
+		"empty": {},
 	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
@@ -131,7 +163,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			}
 			payload struct {
 				Data struct {
-					DirSlugs []string `json:"dirSlugs"`
+					Repos []cloudapi.Repo `json:"repos"`
 				} `json:"data"`
 			}
 		)
@@ -143,10 +175,10 @@ func TestRunInitActionCmd(t *testing.T) {
 				return
 			}
 		}
-		if strings.Contains(input.Query, "dirSlugs") {
+		if strings.Contains(input.Query, "repos") {
 			token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 			require.True(t, ok)
-			payload.Data.DirSlugs, ok = dirsByToken[token]
+			payload.Data.Repos, ok = reposByToken[token]
 			require.True(t, ok)
 		}
 		body, err := json.Marshal(payload)
@@ -164,27 +196,34 @@ func TestRunInitActionCmd(t *testing.T) {
 		expected *InitActionCmd // expected command after user interaction
 		wantErr  bool           // whether the command should return an error
 	}{
+		/*
+			+---------------------+
+			|    versioned flow   |
+			+---------------------+
+		*/
 		{
 			name: "all arg and flags supplied",
 			cmd: &InitActionCmd{
+				flow:        "versioned",
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 			expected: &InitActionCmd{
+				flow:        "versioned",
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 		},
 		{
-			name: "no dir path and driver supplied",
+			name: "no dir path and driver supplied, choose from repo",
 			cmd: &InitActionCmd{
-				Token:       "token",
+				Token:       "one-repo",
 				DirName:     "name",
 				SchemaScope: true,
 			},
@@ -192,25 +231,25 @@ func TestRunInitActionCmd(t *testing.T) {
 			expected: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 		},
 		{
 			name: "no dir path supplied, choose manual dir path",
 			cmd: &InitActionCmd{
-				Token:       "token",
+				Token:       "one-repo",
 				DirName:     "name",
 				SchemaScope: true,
 			},
-			// arrow key down, enter, `dir/migrations`, enter, enter
+			// arrow key down, enter, `dir/migrations`, enter
 			prompt: "\x1b[B\n`dir/migrations`\n\n",
 			expected: &InitActionCmd{
 				DirPath:     "`dir/migrations`",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 		},
@@ -218,16 +257,16 @@ func TestRunInitActionCmd(t *testing.T) {
 			name: "no dir name supplied use cloud dir name",
 			cmd: &InitActionCmd{
 				DirPath:     "migrations",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
-			prompt: "\n\n",
+			prompt: "\na\n\n\n",
 			expected: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL", // this is the driver of the cloud repo
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 		},
@@ -235,7 +274,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			name: "no dirs in organization",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
-				Driver:  "mysql",
+				driver:  "MYSQL",
 				Token:   "empty",
 			},
 			wantErr: true,
@@ -244,9 +283,9 @@ func TestRunInitActionCmd(t *testing.T) {
 			name: "dir name provided but doesn't exist in cloud",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
-				Driver:  "mysql",
+				driver:  "MYSQL",
 				DirName: "invalid",
-				Token:   "token",
+				Token:   "one-repo",
 			},
 			wantErr: true,
 		},
@@ -254,15 +293,15 @@ func TestRunInitActionCmd(t *testing.T) {
 			name: "single dir in organization",
 			cmd: &InitActionCmd{
 				DirPath:     "migrations",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 			expected: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 		},
@@ -270,17 +309,17 @@ func TestRunInitActionCmd(t *testing.T) {
 			name: "multiple dirs in organization",
 			cmd: &InitActionCmd{
 				DirPath:     "migrations",
-				Driver:      "mysql",
-				Token:       "multiple",
+				driver:      "MYSQL",
+				Token:       "multi-repos",
 				SchemaScope: true,
 			},
 			// use arrow key down and then enter
-			prompt: "\x1b[B\n\n",
+			prompt: "\x1b[B\n",
 			expected: &InitActionCmd{
 				DirPath:     "migrations",
-				DirName:     "name2",
-				Driver:      "mysql",
-				Token:       "multiple",
+				DirName:     "slug2",
+				driver:      "MYSQL",
+				Token:       "multi-repos",
 				SchemaScope: true,
 			},
 		},
@@ -289,15 +328,15 @@ func TestRunInitActionCmd(t *testing.T) {
 			cmd: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
+				driver:      "MYSQL",
 				SchemaScope: true,
 			},
-			prompt: "token\n",
+			prompt: "one-repo\n",
 			expected: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 		},
@@ -305,7 +344,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			name: "empty token prompt",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
-				Driver:  "mysql",
+				driver:  "MYSQL",
 			},
 			prompt:  " \n",
 			wantErr: true,
@@ -314,7 +353,7 @@ func TestRunInitActionCmd(t *testing.T) {
 			name: "invalid token prompt",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
-				Driver:  "mysql",
+				driver:  "MYSQL",
 			},
 			prompt:  "invalid token\n",
 			wantErr: true,
@@ -322,32 +361,32 @@ func TestRunInitActionCmd(t *testing.T) {
 		{
 			name:   "ci file exists",
 			client: createGHClient(&mockService{}, &mockService{}),
-			prompt: "\n",
+			prompt: "\n\n",
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				driver:  "MYSQL",
+				Token:   "one-repo",
 			},
 			wantErr: true,
 		},
 		{
 			name:   "replace existing ci file",
 			client: createGHClient(&mockService{}, &mockService{}),
-			prompt: "\n",
+			prompt: "\n\n",
 			cmd: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				Replace:     true,
 				SchemaScope: true,
 			},
 			expected: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				Replace:     true,
 				SchemaScope: true,
 			},
@@ -366,20 +405,17 @@ func TestRunInitActionCmd(t *testing.T) {
 			cmd: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 			// arrow key down and then enter
-			prompt: "\x1b[B\n\n",
+			prompt: "\x1b[B\n",
 			expected: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
-				ConfigPath:  "",
-				ConfigEnv:   "",
-				HasDevURL:   false,
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 		},
@@ -397,20 +433,22 @@ func TestRunInitActionCmd(t *testing.T) {
 			cmd: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
-			prompt: "\n\n",
+			prompt: "\n\n\n",
 			expected: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
-				ConfigPath:  "atlas.hcl",
-				ConfigEnv:   "local",
-				HasDevURL:   true,
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
+				env: gen.Env{
+					Name:      "local",
+					Path:      "atlas.hcl",
+					HasDevURL: true,
+				},
 			},
 		},
 		{
@@ -427,8 +465,8 @@ func TestRunInitActionCmd(t *testing.T) {
 			cmd: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 			// arrow key down and then enter
@@ -436,12 +474,45 @@ func TestRunInitActionCmd(t *testing.T) {
 			expected: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
-				ConfigPath:  "",
-				ConfigEnv:   "",
-				HasDevURL:   false,
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
+				env:         gen.Env{},
+			},
+		},
+		{
+			name: "repo has atlas.hcl without dev-url in env block, use it",
+			client: createGHClient(
+				&mockService{
+					getContentError: &github.ErrorResponse{Message: "Not Found"},
+					// language=HCL
+					hclFileContent: `env "local" {
+		                                  url = "postgres://localhost:5432/dev"
+		                            }`},
+				&mockService{hasHclFile: true}),
+
+			cmd: &InitActionCmd{
+				DirPath:     "migrations",
+				DirName:     "name",
+				driver:      "MYSQL",
+				Token:       "one-repo",
+				SchemaScope: true,
+			},
+			// arrow key down and then enter
+			prompt: "\n",
+			expected: &InitActionCmd{
+				DirPath:     "migrations",
+				DirName:     "name",
+				driver:      "MYSQL",
+				Token:       "one-repo",
+				ConfigPath:  "atlas.hcl",
+				ConfigEnv:   "local",
+				SchemaScope: true,
+				env: gen.Env{
+					Name:   "local",
+					Path:   "atlas.hcl",
+					HasURL: true,
+				},
 			},
 		},
 		{
@@ -449,15 +520,15 @@ func TestRunInitActionCmd(t *testing.T) {
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				driver:  "MYSQL",
+				Token:   "one-repo",
 			},
-			prompt: "\n",
+			prompt: "\n\n",
 			expected: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: true,
 			},
 		},
@@ -466,17 +537,125 @@ func TestRunInitActionCmd(t *testing.T) {
 			cmd: &InitActionCmd{
 				DirPath: "migrations",
 				DirName: "name",
-				Driver:  "mysql",
-				Token:   "token",
+				driver:  "MYSQL",
+				Token:   "one-repo",
 			},
 			// arrow key down, enter
-			prompt: "\x1b[B\n\n",
+			prompt: "\x1b[B\n",
 			expected: &InitActionCmd{
 				DirPath:     "migrations",
 				DirName:     "name",
-				Driver:      "mysql",
-				Token:       "token",
+				driver:      "MYSQL",
+				Token:       "one-repo",
 				SchemaScope: false,
+			},
+		},
+		/*
+			+------------------------+
+			|    declarative flow    |
+			+------------------------+
+		*/
+		{
+			name: "no from/to supplied",
+			client: createGHClient(
+				&mockService{
+					hclFileContent: `env "local" {
+		                                  dev = "mysql://localhost:3306/dev"
+		                            }`},
+				&mockService{hasHclFile: true}),
+			cmd: &InitActionCmd{
+				Token:       "multi-repos",
+				SchemaScope: true,
+				Replace:     true,
+			},
+			prompt: "\n\natlas://init\nfile://schema.hcl\n\n",
+			expected: &InitActionCmd{
+				From:             "atlas://init",
+				To:               "file://schema.hcl",
+				Token:            "multi-repos",
+				driver:           "POSTGRESQL",
+				SchemaScope:      true,
+				cloudRepo:        "slug1",
+				Replace:          true,
+				SetupSchemaApply: ptr(true),
+				env: gen.Env{
+					Name:      "local",
+					Path:      "atlas.hcl",
+					HasDevURL: true,
+				},
+			},
+		},
+		{
+			name: "all args supplied",
+			cmd: &InitActionCmd{
+				From:             "schema.hcl",
+				To:               "atlas://slug1",
+				driver:           "MYSQL",
+				Token:            "multi-repos",
+				SchemaScope:      true,
+				SetupSchemaApply: ptr(true),
+			},
+			expected: &InitActionCmd{
+				From:             "schema.hcl",
+				To:               "atlas://slug1",
+				driver:           "POSTGRESQL",
+				Token:            "multi-repos",
+				SchemaScope:      true,
+				SetupSchemaApply: ptr(true),
+			},
+		},
+		{
+			name: "empty driver, select postgresql",
+			cmd: &InitActionCmd{
+				Token:            "multi-repos",
+				SchemaScope:      true,
+				SetupSchemaApply: ptr(true),
+			},
+			prompt: "\x1b[B\x1b[B\x1b[B\natlas://d\nfile://schema.hcl\n\x1b[B\n",
+			expected: &InitActionCmd{
+				Token:            "multi-repos",
+				To:               "file://schema.hcl",
+				driver:           "POSTGRESQL",
+				From:             "atlas://d",
+				cloudRepo:        "slug3",
+				SchemaScope:      true,
+				SetupSchemaApply: ptr(true),
+			},
+		},
+		{
+			name: "not setting 'schema apply' action by flag, select no",
+			cmd: &InitActionCmd{
+				Token:            "multi-repos",
+				SchemaScope:      true,
+				SetupSchemaApply: nil,
+			},
+			prompt: "\x1b[B\x1b[B\x1b[B\natlas://d\nfile://schema.hcl\n\x1b[B\n\x1b[B\n",
+			expected: &InitActionCmd{
+				Token:            "multi-repos",
+				To:               "file://schema.hcl",
+				driver:           "POSTGRESQL",
+				From:             "atlas://d",
+				cloudRepo:        "slug3",
+				SchemaScope:      true,
+				SetupSchemaApply: ptr(false),
+			},
+		},
+		{
+			name: "not setting 'schema apply' action by flag, select yes",
+			cmd: &InitActionCmd{
+				Token:            "multi-repos",
+				SchemaScope:      true,
+				SetupSchemaApply: nil,
+			},
+			prompt: "\x1b[B\x1b[B\x1b[B\natlas://d\nfile://schema.hcl\n\n\x1b[B\n",
+			expected: &InitActionCmd{
+				Token:            "multi-repos",
+				To:               "file://schema.hcl",
+				driver:           "POSTGRESQL",
+				From:             "atlas://d",
+				cloudRepo:        "slug3",
+				SchemaScope:      true,
+				SetupSchemaApply: ptr(true),
 			},
 		},
 	}
@@ -509,13 +688,15 @@ func TestRunInitActionCmd(t *testing.T) {
 }
 
 func requireCommandsEqual(t *testing.T, a, b *InitActionCmd) {
-	require.Equal(t, a.DirPath, b.DirPath)
-	require.Equal(t, a.DirName, b.DirName)
-	require.Equal(t, a.Driver, b.Driver)
-	require.Equal(t, a.Token, b.Token)
-	require.Equal(t, a.ConfigPath, b.ConfigPath)
-	require.Equal(t, a.ConfigEnv, b.ConfigEnv)
-	require.Equal(t, a.HasDevURL, b.HasDevURL)
-	require.Equal(t, a.Replace, b.Replace)
-	require.Equal(t, a.SchemaScope, b.SchemaScope)
+	require.Equal(t, a.DirPath, b.DirPath, "DirPath mismatch")
+	require.Equal(t, a.DirName, b.DirName, "DirName mismatch")
+	require.Equal(t, a.driver, b.driver, "Driver mismatch")
+	require.Equal(t, a.Token, b.Token, "Token mismatch")
+	require.Equal(t, a.env, b.env, "env mismatch")
+	require.Equal(t, a.Replace, b.Replace, "Replace mismatch")
+	require.Equal(t, a.SchemaScope, b.SchemaScope, "SchemaScope mismatch")
+	require.Equal(t, a.From, b.From, "From mismatch")
+	require.Equal(t, a.To, b.To, "To mismatch")
+	require.Equal(t, a.cloudRepo, b.cloudRepo, "cloudRepo mismatch")
+	require.Equal(t, a.SetupSchemaApply, b.SetupSchemaApply, "SetupSchemaApply mismatch")
 }

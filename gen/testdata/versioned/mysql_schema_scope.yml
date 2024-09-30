@@ -16,21 +16,23 @@ permissions:
 jobs:
   atlas:
     services:
-      # Spin up a mariadb:11 container to be used as the dev-database for analysis.
-      mariadb:
-        image: mariadb:11
+      # Spin up a mysql:8 container to be used as the dev-database for analysis.
+      mysql:
+        image: mysql:8
         env:
           MYSQL_DATABASE: dev
           MYSQL_ROOT_PASSWORD: pass
         ports:
           - 3306:3306
         options: >-
-          --health-cmd "healthcheck.sh --su-mysql --connect --innodb_initialized"
+          --health-cmd "mysqladmin ping -ppass"
           --health-interval 10s
           --health-start-period 10s
           --health-timeout 5s
           --health-retries 10
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -42,12 +44,10 @@ jobs:
         with:
           dir: 'file://migrations'
           dir-name: 'name'
-          dev-url: 'maria://root:pass@localhost:3306'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+          dev-url: 'mysql://root:pass@localhost:3306/dev'
       - uses: ariga/atlas-action/migrate/push@v1
         if: github.ref == 'refs/heads/master'
         with:
           dir: 'file://migrations'
           dir-name: 'name'
-          dev-url: 'maria://root:pass@localhost:3306'
+          dev-url: 'mysql://root:pass@localhost:3306/dev'

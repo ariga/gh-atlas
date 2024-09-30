@@ -1,0 +1,35 @@
+name: Atlas
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+# Permissions to write comments on the pull request.
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  plan:
+    if: ${{ github.event_name == 'pull_request' }}
+      - uses: ariga/atlas-action/schema/plan@v1
+        with:
+          config: 'file://atlas.hcl'
+          env: 'prod'
+  apply:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      - uses: ariga/atlas-action/schema/plan/approve@v1
+        id: plan-approve
+        with:
+          config: 'file://atlas.hcl'
+          env: 'prod'
+      - uses: ariga/atlas-action/schema/push@v1
+        with:
+          config: 'file://atlas.hcl'
+          env: 'prod'
+      - uses: ariga/atlas-action/schema/apply@v1
+        if: ${{ steps.plan-approve.outputs.status == 'APPROVED' }}
+        with:
+          config: 'file://atlas.hcl'
+          env: 'prod'
+          plan: ${{ steps.plan-approve.outputs.plan }}

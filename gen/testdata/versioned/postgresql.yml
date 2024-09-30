@@ -16,22 +16,23 @@ permissions:
 jobs:
   atlas:
     services:
-      # Spin up a clickhouse:23.10 container to be used as the dev-database for analysis.
-      clickhouse:
-        image: clickhouse/clickhouse-server:23.10
+      # Spin up a postgres:15 container to be used as the dev-database for analysis.
+      postgres:
+        image: postgres:15
         env:
-          CLICKHOUSE_DB: test
-          CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
-          CLICKHOUSE_PASSWORD: pass
-          CLICKHOUSE_USER: root
+          POSTGRES_DB: dev
+          POSTGRES_PASSWORD: pass
         ports:
-          - 9000:9000
+          - 5432:5432
         options: >-
-          --health-cmd "clickhouse-client --host localhost --query 'SELECT 1'"
+          --health-cmd pg_isready
           --health-interval 10s
+          --health-start-period 10s
           --health-timeout 5s
           --health-retries 5
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -43,12 +44,10 @@ jobs:
         with:
           dir: 'file://migrations'
           dir-name: 'name'
-          dev-url: 'clickhouse://root:pass@localhost:9000'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+          dev-url: 'postgres://postgres:pass@localhost:5432/dev?sslmode=disable'
       - uses: ariga/atlas-action/migrate/push@v1
         if: github.ref == 'refs/heads/master'
         with:
           dir: 'file://migrations'
           dir-name: 'name'
-          dev-url: 'clickhouse://root:pass@localhost:9000'
+          dev-url: 'postgres://postgres:pass@localhost:5432/dev?sslmode=disable'

@@ -1,0 +1,116 @@
+{{ template "header" . }}
+on:
+  push:
+    branches: [ {{ .DefaultBranch }} ]
+  pull_request:
+    branches: [ {{ .DefaultBranch }} ]
+  workflow_dispatch:
+{{- template "permissions" . }}
+jobs:
+  plan:
+    if: {{`${{ github.event_name == 'pull_request' }}`}}
+    {{- if not .Env.HasDevURL }}
+    {{- template "job-setup" . }}
+    {{- end }}
+      - uses: ariga/atlas-action/schema/plan@v1
+        with:
+          {{- if .From }}
+          from: {{ .From }}
+          {{- end }}
+          {{- if not .Env.HasSchemaSrc }}
+          {{- if .To }}
+          to: {{ .To }}
+          {{- end }}
+          {{- end }}
+          {{- if not .Env.HasRepoName }}
+          {{- with .CloudRepo }}
+          schema-name: {{ . }}
+          {{- end }}
+          {{- end }}
+          {{- if not .Env.HasDevURL }}
+          {{ template "UseServices" . }}
+          {{- end }}
+          {{- with .Env.Path }}
+          config: 'file://{{ . }}'
+          {{- end }}
+          {{- with .Env.Name }}
+          env: '{{ . }}'
+          {{- end }}
+  apply:
+    if: {{`${{ github.event_name == 'push' && github.ref == 'refs/heads/`}}{{ .DefaultBranch }}{{`' }}`}}
+    {{- if not .Env.HasDevURL }}
+    {{- template "job-setup" . }}
+    {{- end }}
+      - uses: ariga/atlas-action/schema/plan/approve@v1
+        id: plan-approve
+        with:
+          {{- if not .Env.HasURL }}
+          {{- if .From }}
+          from: {{ .From }}
+          {{- end }}
+          {{- end }}
+          {{- if not .Env.HasSchemaSrc }}
+          {{- if .To }}
+          to: {{ .To }}
+          {{- end }}
+          {{- end }}
+          {{- if not .Env.HasDevURL }}
+          {{ template "UseServices" . }}
+          {{- end }}
+          {{- if not .Env.HasRepoName }}
+          {{- with .CloudRepo }}
+          schema-name: {{ . }}
+          {{- end }}
+          {{- end }}
+          {{- with .Env.Path }}
+          config: 'file://{{ . }}'
+          {{- end }}
+          {{- with .Env.Name }}
+          env: '{{ . }}'
+          {{- end }}
+      - uses: ariga/atlas-action/schema/push@v1
+        with:
+          {{- if not .Env.HasDevURL }}
+          {{ template "UseServices" . }}
+          {{- end }}
+          {{- if not .Env.HasSchemaSrc }}
+          {{- if .To }}
+          url: {{ .To }}
+          {{- end }}
+          {{- end }}
+          {{- if not .Env.HasRepoName }}
+          {{- with .CloudRepo }}
+          schema-name: {{ . }}
+          {{- end }}
+          {{- end }}
+          {{- with .Env.Path }}
+          config: 'file://{{ . }}'
+          {{- end }}
+          {{- with .Env.Name }}
+          env: '{{ . }}'
+          {{- end }}
+      {{- if .SetupSchemaApply }}
+      - uses: ariga/atlas-action/schema/apply@v1
+        if: {{`${{ steps.plan-approve.outputs.status == 'APPROVED' }}`}}
+        with:
+          {{- if not .Env.HasURL }}
+          {{- if .From }}
+          url: {{ .From }}
+          {{- end }}
+          {{- end }}
+          {{- if not .Env.HasSchemaSrc }}
+          {{- if .To }}
+          to: {{ .To }}
+          {{- end }}
+          {{- end }}
+          {{- if not .Env.HasDevURL }}
+          {{ template "UseServices" . }}
+          {{- end }}
+          {{- with .Env.Path }}
+          config: 'file://{{ . }}'
+          {{- end }}
+          {{- with .Env.Name }}
+          env: '{{ . }}'
+          {{- end }}
+          plan: {{`${{ steps.plan-approve.outputs.plan }}`}}
+      {{- end }}

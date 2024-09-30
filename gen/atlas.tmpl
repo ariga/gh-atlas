@@ -1,24 +1,21 @@
+{{- define "header" -}}
 name: Atlas
-on:
-  push:
-    branches:
-      - {{ .DefaultBranch }}
-    paths:
-      - .github/workflows/ci-atlas.yaml
-      - '{{ .Path }}/*'
-  pull_request:
-    paths:
-      - '{{ .Path }}/*'
+{{- end }}
+
+{{- define "permissions" }}
 # Permissions to write comments on the pull request.
 permissions:
   contents: read
   pull-requests: write
-jobs:
-  atlas:
-    {{- if .CreateDevURL }}
+{{- end }}
+
+{{- define "job-setup" }}
+    {{- if not .Env.HasDevURL }}
     {{- template "services" . }}
     {{- end }}
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: {{`${{ github.token }}`}}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -26,36 +23,4 @@ jobs:
       - uses: ariga/setup-atlas@v0
         with:
           cloud-token: {{`${{ secrets.`}}{{ .SecretName }}{{` }}`}}
-      - uses: ariga/atlas-action/migrate/lint@v1
-        with:
-          dir: 'file://{{ .Path }}'
-          {{- with .DirName }}
-          dir-name: '{{ . }}'
-          {{- end }}
-          {{- if .CreateDevURL }}
-          {{ template "UseServices" . }}
-          {{- end }}
-          {{- with .ConfigPath }}
-          config: 'file://{{ . }}'
-          {{- end }}
-          {{- with .Env }}
-          env: '{{ . }}'
-          {{- end }}
-        env:
-          GITHUB_TOKEN: {{`${{ github.token }}`}}
-      - uses: ariga/atlas-action/migrate/push@v1
-        if: github.ref == 'refs/heads/{{ .DefaultBranch }}'
-        with:
-          dir: 'file://{{ .Path }}'
-          {{- with .DirName }}
-          dir-name: '{{ . }}'
-          {{- end }}
-          {{- if .CreateDevURL }}
-          {{ template "UseServices" . }}
-          {{- end }}
-          {{- with .ConfigPath }}
-          config: 'file://{{ . }}'
-          {{- end }}
-          {{- with .Env }}
-          env: '{{ . }}'
-          {{- end }}
+{{- end }}

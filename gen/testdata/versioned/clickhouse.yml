@@ -15,7 +15,25 @@ permissions:
   pull-requests: write
 jobs:
   atlas:
+    services:
+      # Spin up a clickhouse:23.10 container to be used as the dev-database for analysis.
+      clickhouse:
+        image: clickhouse/clickhouse-server:23.10
+        env:
+          CLICKHOUSE_DB: test
+          CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+          CLICKHOUSE_PASSWORD: pass
+          CLICKHOUSE_USER: root
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "clickhouse-client --host localhost --query 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -27,12 +45,10 @@ jobs:
         with:
           dir: 'file://migrations'
           dir-name: 'name'
-          dev-url: 'sqlite://dev?mode=memory'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+          dev-url: 'clickhouse://root:pass@localhost:9000'
       - uses: ariga/atlas-action/migrate/push@v1
         if: github.ref == 'refs/heads/master'
         with:
           dir: 'file://migrations'
           dir-name: 'name'
-          dev-url: 'sqlite://dev?mode=memory'
+          dev-url: 'clickhouse://root:pass@localhost:9000'
