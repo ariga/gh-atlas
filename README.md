@@ -15,12 +15,16 @@ To quickly set up [Atlas Cloud](https://atlasgo.cloud) CI for your repository, f
   ```sh
   gh extension install ariga/gh-atlas
   ```
-3. Setting up Atlas Cloud for your repository requires creating new GitHub Actions workflows.  
+3. Login to GitHub:
+  ```sh
+  gh auth login
+  ```
+4. Setting up Atlas Cloud for your repository requires creating new GitHub Actions workflows.  
   To do this, you need add the following permissions to your GitHub CLI:
   ```sh
   gh auth refresh -s write:packages,workflow
   ```
-4. Use the `init-action` command to set up Atlas Cloud for your repository:
+5. Use the `init-action` command to set up Atlas Cloud for your repository:
   ```sh
   gh atlas init-action
   ```
