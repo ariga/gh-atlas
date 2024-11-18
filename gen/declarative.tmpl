@@ -9,9 +9,7 @@ on:
 jobs:
   plan:
     if: {{`${{ github.event_name == 'pull_request' }}`}}
-    {{- if not .Env.HasDevURL }}
     {{- template "job-setup" . }}
-    {{- end }}
       - uses: ariga/atlas-action/schema/plan@v1
         with:
           {{- if .From }}
@@ -38,9 +36,7 @@ jobs:
           {{- end }}
   apply:
     if: {{`${{ github.event_name == 'push' && github.ref == 'refs/heads/`}}{{ .DefaultBranch }}{{`' }}`}}
-    {{- if not .Env.HasDevURL }}
     {{- template "job-setup" . }}
-    {{- end }}
       - uses: ariga/atlas-action/schema/plan/approve@v1
         id: plan-approve
         with:
