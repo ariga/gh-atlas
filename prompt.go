@@ -259,7 +259,7 @@ func (i *InitActionCmd) chooseDirPath(dirs []string) (string, error) {
 
 func (i *InitActionCmd) setSchemaScope() error {
 	// sqlite has only one schema
-	if i.SchemaScope || i.driver == "SQLITE" {
+	if i.SchemaScope || i.driver == "SQLITE" || i.driver == "SPANNER" {
 		return nil
 	}
 	prompt := promptui.Select{
