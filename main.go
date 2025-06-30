@@ -62,7 +62,7 @@ type InitActionCmd struct {
 	DirName          string        `optional:"" help:"Name of target migration directory in Atlas Cloud."`
 	Replace          bool          `optional:"" help:"Replace existing Atlas CI workflow."`
 	SetupSchemaApply *bool         `name:"schema-apply" help:"Whether to setup the 'schema apply' action."`
-	driver           string        `hidden:"" help:"Driver of the migration directory (mysql,postgresql,mariadb,sqlite,sqlserver,clickhouse)."`
+	driver           string        `hidden:"" help:"Driver of the migration directory (mysql,postgresql,mariadb,sqlite,sqlserver,clickhouse,spanner)."`
 	flow             flowType      `hidden:"" help:"Workflow to initialize (versioned, declarative)."`
 	stdin            io.ReadCloser `hidden:""`
 	cloudURL         string        `hidden:""`
