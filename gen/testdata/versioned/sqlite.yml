@@ -36,3 +36,8 @@ jobs:
           dir: 'file://migrations'
           dir-name: 'name'
           dev-url: 'sqlite://dev?mode=memory'
+      - uses: ariga/atlas-action/migrate/apply@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          dir: 'file://migrations'
+          url: ${{ secrets.DB_URL }}
