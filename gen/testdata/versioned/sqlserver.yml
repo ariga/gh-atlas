@@ -51,3 +51,8 @@ jobs:
           dir: 'file://migrations'
           dir-name: 'name'
           dev-url: 'sqlserver://sa:P@ssw0rd0995@localhost:1433?database=master&mode=database'
+      - uses: ariga/atlas-action/migrate/apply@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          dir: 'file://migrations'
+          url: ${{ secrets.DB_URL }}

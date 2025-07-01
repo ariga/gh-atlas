@@ -41,3 +41,8 @@ jobs:
           dir: 'file://migrations'
           dir-name: 'name'
           dev-url: 'spanner://localhost:9010/projects/project/instances/instance/databases/dev?useplaintext=true;autoConfigEmulator=true'
+      - uses: ariga/atlas-action/migrate/apply@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          dir: 'file://migrations'
+          url: ${{ secrets.DB_URL }}

@@ -44,3 +44,14 @@ jobs:
           {{- with .Env.Name }}
           env: '{{ . }}'
           {{- end }}
+      - uses: ariga/atlas-action/migrate/apply@v1
+        if: github.ref == 'refs/heads/{{ .DefaultBranch }}'
+        with:
+          dir: 'file://{{ .Path }}'
+          url: {{`${{ secrets.DB_URL }}`}}
+          {{- with .Env.Path }}
+          config: 'file://{{ . }}'
+          {{- end }}
+          {{- with .Env.Name }}
+          env: '{{ . }}'
+          {{- end }}
