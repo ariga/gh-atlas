@@ -163,7 +163,9 @@ func TestRunInitActionCmd(t *testing.T) {
 			}
 			payload struct {
 				Data struct {
-					Repos []cloudapi.Repo `json:"repos"`
+					Repos struct {
+						Repos []cloudapi.Repo `json:"repos"`
+					} `json:"repos"`
 				} `json:"data"`
 			}
 		)
@@ -178,7 +180,7 @@ func TestRunInitActionCmd(t *testing.T) {
 		if strings.Contains(input.Query, "repos") {
 			token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 			require.True(t, ok)
-			payload.Data.Repos, ok = reposByToken[token]
+			payload.Data.Repos.Repos, ok = reposByToken[token]
 			require.True(t, ok)
 		}
 		body, err := json.Marshal(payload)

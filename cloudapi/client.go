@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -96,9 +97,10 @@ func (c *Client) post(ctx context.Context, query string, vars, data any) error {
 	if err != nil {
 		return err
 	}
-	defer req.Body.Close()
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+		body, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("unexpected status code: %d: %s", res.StatusCode, bytes.TrimSpace(body))
 	}
 	var scan = struct {
 		Data   any           `json:"data"`
@@ -141,12 +143,14 @@ func (c *Client) ValidateToken(ctx context.Context) error {
 func (c *Client) Repos(ctx context.Context) ([]Repo, error) {
 	var (
 		payload struct {
-			Repos []Repo `json:"repos"`
+			Repos struct {
+				Repos []Repo `json:"repos"`
+			} `json:"repos"`
 		}
-		query = `query { repos { title slug url type driver } }`
+		query = `query { repos { repos { title slug url type driver } } }`
 	)
 	if err := c.post(ctx, query, nil, &payload); err != nil {
 		return nil, err
 	}
-	return payload.Repos, nil
+	return payload.Repos.Repos, nil
 }
