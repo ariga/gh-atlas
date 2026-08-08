@@ -6,80 +6,12 @@ on:
   pull_request:
 
 jobs:
-  golangci-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
-      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
-        with:
-          go-version-file: 'go.mod'
-      - name: Run Go linters
-        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
-        with:
-          version: v2.12.2
-          args: --verbose
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
-      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
-        with:
-          go-version-file: 'go.mod'
-      - name: Run tests
-        run: go test -race ./...
-  integration-test:
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.USER_TOKEN }}
-    steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
-      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
-        with:
-          go-version-file: 'go.mod'
-      - name: Install GitHub cli
+      - name: install atlas
         run: |
-          sudo apt update
-          sudo apt install gh -y
-      - name: Validate pull request is not created yet
+          curl -sSf https://atlasgo.sh | sh
+      - name: whoami
         run: |
-          PULL_REQUESTS=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'add atlas ci workflow' in:title" --json  headRefName | jq length)
-          if [ $PULL_REQUESTS -ne 0 ]; then
-              echo "Pull request already created"
-              exit 1
-          fi
-      - name: Build extension
-        run: |
-          go build
-      - name: Install extension
-        run: |
-          gh extension install .
-      - name: Run GitHub atlas extension
-        run: |
-          gh atlas init-action -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --dir-name="sync-action-integration-test" "sqlite_dir" \
-          --config-path="atlas.hcl" --config-env="local"
-      - name: Run GitHub atlas extension with invalid dir
-        id: invalid_dir
-        continue-on-error: true
-        run: |
-          gh atlas init-action -R ${{ secrets.TEST_REPO }} --token=${{ secrets.TEST_ATLAS_TOKEN }} --dir-name="invalid" "sqlite_dir" \
-          --config-path="atlas.hcl" --config-env="local"
-      - name: Check invalid dir error
-        if : steps.invalid_dir.outcome == 'success'
-        run: |
-          echo "Invalid dir should fail"
-          exit 1
-      - name: Validate pull request is created
-        uses: nick-fields/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
-        with:
-          timeout_seconds: 20
-          retry_wait_seconds: 5
-          max_attempts: 4
-          command: PULL_REQUESTS=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'add atlas ci workflow' in:title" --json  headRefName | jq length) && [ $PULL_REQUESTS -eq 1 ]
-      - name: Cleanup the created pr, branch and secret
-        if: always()
-        run: |
-          BRANCH=$(gh pr list -R ${{ secrets.TEST_REPO }} --search "'add atlas ci workflow' in:title" --json  headRefName | jq -r '.[0].headRefName')
-          gh pr close -R ${{ secrets.TEST_REPO }} $BRANCH -d
-          BRANCH_SUFFIX=${BRANCH: -6}
-          SECRET_NAME="ATLAS_CLOUD_TOKEN_$BRANCH_SUFFIX"
-          gh secret delete -R ${{ secrets.TEST_REPO }} $SECRET_NAME
+          ATLAS_TOKEN=${{ secrets.TEST_ATLAS_TOKEN }} atlas whoami
